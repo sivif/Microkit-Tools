@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Microkit Toolkit</title>
+  <style>
+    body {
+      background: #f9f9f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .dark-mode {
+        background-color: #222222;
+        color: white;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 30px);
+      grid-template-rows: repeat(8, 30px);
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+    .cell.on {
+      background-color: #489e73;
+    }
+    .cell:hover {
+      cursor: pointer;
+    }
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(8, 30px);
+      gap: 4px;
+    }
+    .inputs input {
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      font-size: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #fff;
+      margin-left: 2px;
+    }
+
+    .btn { 
+        border:1px solid #000000;
+        border-radius:100px;
+        padding:10px;
+        margin:10px;
+        background-color:#F9F9F9;
+        color:#000000;
+        font-weight:normal;
+        opacity:1;
+        transition:1s;
+    } 
+    .btn:hover {
+        cursor:pointer;
+        background-color:#F9F9F9;
+        opacity:0.5;
+        transition:1s;
+        color:#000000;
+    } 
+
+    
+  .arrow-wrapper {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-left: -5px;
+  }
+
+  .arrow-head-left {
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 20px solid #489e73; /* triangle pointing left */
+  }
+
+  .arrow-line {
+    width: calc(8 * 30px + 7 * 4px - 20px); /* grid width minus arrow head */
+    height: 4px;
+    background-color: #489e73;
+  }
+
+  .jump-calc {
+    margin-top: 20px;
+    text-align: left;
+    font-size: 14px;
+  }
+  .jump-calc input {
+    width: 60px;
+    margin: 0 10px;
+  }
+  .jump-calc button {
+    margin-left: 10px;
+  }
+
+  .sticky-theme {
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    z-index: 100;
+  }
+
+  
+  </style>
+</head>
+<body onload="start()">
+  <div class="container">
+      <div class="sticky-theme">
+        <input id="toggle" type="checkbox" style="display:none;" onclick="dark()">
+        <label class="btn" for="toggle">Theme</label>
+      </div>
+
+    
+      <div style="text-align: center; margin-bottom: 10px;">
+        <h4 style="margin-bottom: 5px;">8×8 Matrix to Hexadecimal :)</h4>
+        <h5 style="margin-top: 0px;">For micropro</h5>
+      </div>
+
+    <div class="grid" id="grid"></div>
+    <div class="inputs" id="inputs"></div>
+    <div class="arrow-wrapper">
+      <div class="arrow-head-left"></div>
+      <div class="arrow-line"></div>
+    </div>
+    <button class="btn" onclick="resetGrid()">Reset</button>
+
+    <div class="jump-calc">
+      <h4>Jump/Loop Offset Calculator</h4>
+      <label>Current Address: <input type="text" id="current" value="1000"></label>
+      <label>Target Address: <input type="text" id="target" value="1000"></label>
+      <button class="btn" onclick="calculateJump()">Calculate</button>
+      <p id="result"></p>
+    </div>
+
+
+
+  </div>
+
+
+
+  <script>
+    const grid = document.getElementById('grid');
+    const inputs = document.getElementById('inputs');
+    const cells = [];
+
+    function start() {
+        dark();
+        resetGrid();
+    }
+
+    function dark() {
+        var element = document.body;
+        element.classList.toggle("dark-mode");
+        element.classList.toggle("celldark");
+    }
+
+    function resetGrid() {
+        cells.forEach(cell => cell.classList.remove('on'));
+        updateHex();
+    }
+
+    function calculateJump() {
+      const currentHex = document.getElementById('current').value.trim();
+      const targetHex = document.getElementById('target').value.trim();
+
+      const current = parseInt(currentHex, 16);
+      const target = parseInt(targetHex, 16);
+
+      if (isNaN(current) || isNaN(target)) {
+        document.getElementById('result').textContent = "Invalid hex input. Use values like 1000 or 100D.";
+        return;
+      }
+
+      const offset = target - current - 2; // 2 bytes for instruction
+      const hexOffset = (offset & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+      const result = document.getElementById('result');
+
+      if (offset >= -128 && offset <= 127) {
+        result.textContent = `JMP ${targetHex.toUpperCase()} → E9 ${hexOffset}`;
+      } else {
+        result.textContent = `Offset ${offset} out of range for short jump (-128 to +127)`;
+      }
+    }
+
+
+
+
+    // Create 64 cells (8x8)
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.dataset.row = row;
+        cell.dataset.col = col;
+        cell.addEventListener('click', () => {
+          cell.classList.toggle('on');
+          updateHex();
+        });
+        grid.appendChild(cell);
+        cells.push(cell);
+      }
+    }
+
+    // Create 8 input fields
+    const hexInputs = [];
+    for (let i = 0; i < 8; i++) {
+      const input = document.createElement('input');
+      input.readOnly = true;
+      inputs.appendChild(input);
+      hexInputs.push(input);
+    }
+
+    // Update hex values based on column states
+    function updateHex() {
+      for (let col = 0; col < 8; col++) {
+        let binary = '';
+        for (let row = 0; row < 8; row++) {
+          const cell = cells.find(c => c.dataset.row == row && c.dataset.col == col);
+          binary += cell.classList.contains('on') ? '0' : '1';
+        }
+        const hex = parseInt(binary, 2).toString(16).padStart(2, '0').toUpperCase();
+        hexInputs[col].value = hex;
+      }
+    }
+  </script>
+</body>
+</html>
