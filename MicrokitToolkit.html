@@ -1,248 +1,848 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Microkit Toolkit</title>
+  <meta charset="utf-8" />
+  <title>Microkit Toolkit - Timeline (fixed layout)</title>
   <style>
-    body {
-      background: #f9f9f9;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      font-family: sans-serif;
-    }
+    :root{
+  /* Light theme (defaults) */
+  --bg: #f9f9f9;
+  --panel: #ffffff;
+  --muted: #666666;
+  --text: #222222;
+  --muted-border: #dddddd;
+  --cell-off: #e0e0e0;
+  --cell-on: #489e73;
+  --control-bg: #F9F9F9;
+  --control-border: rgba(0,0,0,0.8);
+  --accent: #489e73;
+  --overlay-bg: rgba(0,0,0,0.5);
+  --card-shadow: rgba(0,0,0,0.12);
+}
 
-    .dark-mode {
-        background-color: #222222;
-        color: white;
-    }
+/* Dark theme overrides (toggle by adding .dark-mode to body) */
+.dark-mode {
+  --bg: #1b1b1b;
+  --panel: #2b2b2b;
+  --muted: #bdbdbd;
+  --text: #e8e8e8;
+  --muted-border: #444444;
+  --cell-off: #1f1f1f;
+  --cell-on: #3b8a62;
+  --control-bg: #333333;
+  --control-border: #444444;
+  --accent: #3b8a62;
+  --overlay-bg: rgba(0,0,0,0.6);
+  --card-shadow: rgba(0,0,0,0.36);
+}
 
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(8, 30px);
-      grid-template-rows: repeat(8, 30px);
-      gap: 4px;
-      margin-bottom: 10px;
-    }
-    .cell {
-      width: 30px;
-      height: 30px;
-      background-color: #e0e0e0;
-      border-radius: 4px;
-      transition: background-color 0.2s;
-    }
-    .cell.on {
-      background-color: #489e73;
-    }
-    .cell:hover {
-      cursor: pointer;
-    }
-    .inputs {
-      display: grid;
-      grid-template-columns: repeat(8, 30px);
-      gap: 4px;
-    }
-    .inputs input {
-      width: 20px;
-      height: 20px;
-      text-align: center;
-      font-size: 12px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      background-color: #fff;
-      margin-left: 2px;
-    }
+/* ===== Base layout ===== */
+* { box-sizing: border-box; }
+html,body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 180ms ease, color 180ms ease;
+}
 
-    .btn { 
-        border:1px solid #000000;
-        border-radius:100px;
-        padding:10px;
-        margin:10px;
-        background-color:#F9F9F9;
-        color:#000000;
-        font-weight:normal;
-        opacity:1;
-        transition:1s;
-    } 
-    .btn:hover {
-        cursor:pointer;
-        background-color:#F9F9F9;
-        opacity:0.5;
-        transition:1s;
-        color:#000000;
-    } 
+/* Container columns */
+.container {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 18px;
+  width: 1100px;
+  box-sizing: border-box;
+}
 
-    
-  .arrow-wrapper {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
-    margin-left: -5px;
-  }
+/* Left column (main) */
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 640px;
+}
 
-  .arrow-head-left {
-    width: 0;
-    height: 0;
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-right: 20px solid #489e73; /* triangle pointing left */
-  }
+/* Title */
+.title {
+  text-align: center;
+  margin-bottom: 6px;
+}
+.title h4 { margin: 0; }
+.title h5 {
+  margin: 0;
+  font-weight: 400;
+  color: var(--muted);
+}
 
-  .arrow-line {
-    width: calc(8 * 30px + 7 * 4px - 20px); /* grid width minus arrow head */
-    height: 4px;
-    background-color: #489e73;
-  }
+/* ===== Matrix grid ===== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 30px);
+  grid-template-rows: repeat(8, 30px);
+  gap: 4px;
+  margin-bottom: 10px;
+  background: transparent;
+  touch-action: none; /* required for painting on touch devices */
+  -ms-touch-action: none;
+}
 
-  .jump-calc {
-    margin-top: 20px;
-    text-align: left;
-    font-size: 14px;
-  }
-  .jump-calc input {
-    width: 60px;
-    margin: 0 10px;
-  }
-  .jump-calc button {
-    margin-left: 10px;
-  }
+.cell {
+  width: 30px;
+  height: 30px;
+  background-color: var(--cell-off);
+  border-radius: 4px;
+  transition: background-color 120ms linear, transform 80ms ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  display: inline-block;
+}
+.cell.on { background-color: var(--cell-on); }
+.cell:active { transform: scale(0.98); }
+.cell:hover { cursor: pointer; }
 
-  .sticky-theme {
-    position: fixed;
-    bottom: 40px;
-    right: 20px;
-    z-index: 100;
-  }
+/* Hex inputs under grid */
+.inputs {
+  display: grid;
+  grid-template-columns: repeat(8, 30px);
+  gap: 4px;
+  margin-bottom: 8px;
+  align-items: center;
+  justify-items: center;
+}
+.inputs input {
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  font-size: 12px;
+  border: 1px solid var(--muted-border);
+  border-radius: 4px;
+  background-color: var(--panel);
+  color: var(--text);
+}
 
-  
+/* ===== Controls row ===== */
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Left grouped controls and right anchored theme */
+.controls-left { display:flex; gap:8px; align-items:center; }
+.controls-right { display:flex; align-items:center; gap:6px; }
+
+/* Buttons */
+.btn {
+  border: 1px solid var(--control-border);
+  border-radius: 100px;
+  padding: 8px 14px;
+  background-color: var(--control-bg);
+  color: var(--text);
+  transition: opacity 140ms ease, background-color 140ms ease, border-color 140ms ease;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.btn:hover { opacity: 0.9; }
+.small { padding: 6px 8px; border-radius: 8px; font-size: 12px; }
+
+/* Arrow visual */
+.arrow-wrapper { display: flex; align-items: center; margin-top: 10px; margin-left: -5px; }
+.arrow-head-left {
+  width: 0; height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 20px solid var(--accent);
+}
+.arrow-line {
+  width: calc(8 * 30px + 7 * 4px - 20px);
+  height: 4px;
+  background-color: var(--accent);
+}
+
+/* Jump calc */
+.jump-calc { margin-top: 12px; text-align: left; font-size: 14px; width: 100%; color: var(--muted); }
+.jump-calc input { width: 80px; margin: 0 10px 0 6px; }
+
+/* ===== Timeline panel ===== */
+.timeline-panel {
+  width: 480px;
+  background: var(--panel);
+  border: 1px solid var(--muted-border);
+  border-radius: 8px;
+  padding: 12px;
+  box-sizing: border-box;
+  height: 640px;
+  overflow: auto;
+  color: var(--text);
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.timeline-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.frame-list { display:flex; flex-direction:column; gap:8px; }
+
+/* Timeline item layout */
+.frame {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border: 1px dashed var(--muted-border);
+  border-radius: 8px;
+  background: linear-gradient(transparent, transparent);
+  color: var(--text);
+}
+.frame-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+  flex: 0 0 auto;
+}
+.frame-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 120px;
+}
+
+/* Mini preview */
+.mini-preview {
+  display: grid;
+  grid-template-columns: repeat(8, 10px);
+  grid-template-rows: repeat(8, 10px);
+  gap: 2px;
+  width: calc(9 * 10px + 6 * 2px);
+  height: calc(9 * 10px + 6 * 2px);
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--panel);
+  padding: 4px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+.mini-preview .dot { width: 10px; height: 10px; border-radius: 2px; background: var(--cell-off); transition: background 120ms linear; }
+.mini-preview .dot.on { background: var(--cell-on); }
+
+/* Actions on the right */
+.frame-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  margin-left: auto;
+  align-items: flex-end;
+  flex: 0 0 auto;
+}
+.frame-actions .row { display:flex; gap:6px; }
+
+/* Tabs */
+.tabs { display:flex; gap:6px; margin-bottom: 10px; }
+.tab { padding:6px 10px; border-radius:6px; cursor:pointer; border:1px solid var(--muted-border); background: var(--panel); color: var(--text); }
+.tab.active { background: var(--accent); color: #fff; border-color: color-mix(in srgb, var(--accent) 60%, var(--muted-border)); }
+
+/* Dark-mode specific small overrides kept for compatibility */
+.dark-mode .inputs input { background: var(--panel); color: var(--text); border-color: var(--muted-border); }
+.dark-mode .btn { background: var(--control-bg); color: var(--text); border-color: var(--control-border); }
+
+/* ===== Overlay / preview modal ===== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.overlay.show { display: flex; }
+.preview-card {
+  background: var(--panel);
+  padding: 14px;
+  border-radius: 8px;
+  box-shadow: 0 6px 20px var(--card-shadow);
+  max-width: 90%;
+  max-height: 90%;
+  overflow: auto;
+  text-align: center;
+  color: var(--text);
+}
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 30px);
+  grid-template-rows: repeat(8, 30px);
+  gap: 6px;
+  margin: 12px auto;
+}
+.preview-grid .cell { width: 30px; height: 30px; border-radius: 4px; background: var(--cell-off); }
+.preview-grid .cell.on { background: var(--cell-on); }
+
+/* Small helpers */
+.frame-note, .jump-calc span, .title h5 { color: var(--muted); }
+
+/* Responsive */
+@media (max-width: 1150px) {
+  .container { width: 100%; padding: 8px; flex-direction: column; align-items: stretch; }
+  .main { width: auto; }
+  .timeline-panel { width: 100%; height: 360px; }
+}
+
   </style>
 </head>
 <body onload="start()">
   <div class="container">
-      <div class="sticky-theme">
-        <input id="toggle" type="checkbox" style="display:none;" onclick="dark()">
-        <label class="btn" for="toggle">Theme</label>
+    <div class="main">
+      <div class="title">
+        <h4 style="margin:0;">8×8 Matrix to Hexadecimal :)</h4>
+        <h5 style="margin:0; font-weight:normal;">For micropro</h5>
       </div>
 
-    
-      <div style="text-align: center; margin-bottom: 10px;">
-        <h4 style="margin-bottom: 5px;">8×8 Matrix to Hexadecimal :)</h4>
-        <h5 style="margin-top: 0px;">For micropro</h5>
+      <div class="grid" id="grid" aria-label="8 by 8 LED matrix"></div>
+      <div class="inputs" id="inputs"></div>
+
+      <div class="arrow-wrapper" style="margin-bottom:10px;">
+        <div class="arrow-head-left"></div>
+        <div class="arrow-line"></div>
       </div>
 
-    <div class="grid" id="grid"></div>
-    <div class="inputs" id="inputs"></div>
-    <div class="arrow-wrapper">
-      <div class="arrow-head-left"></div>
-      <div class="arrow-line"></div>
+      <div class="controls-row">
+        <div class="controls-left">
+          <button class="btn" onclick="resetGrid()">Reset</button>
+          <button class="btn" id="addFrameBtn" onclick="showAddFrame()">Add to timeline</button>
+        </div>
+
+        <div class="controls-right">
+          <label>
+            <input id="toggle" type="checkbox" style="display:none;" onclick="toggleThemeAndSave()">
+            <label class="btn" for="toggle">Theme</label>
+          </label>
+        </div>
+      </div>
+
+      <div id="addFrameControls" style="display:none; align-items:center; gap:6px;">
+          <input id="frameName" placeholder="Frame name" style="padding:6px;border-radius:6px;border:1px solid #ccc;">
+          <button class="btn small" onclick="addToTimeline()">Save</button>
+          <button class="btn small" onclick="hideAddFrame()">Cancel</button>
+      </div>
+
+      <div class="jump-calc">
+        <h4 style="margin:6px 0;">Jump/Loop Offset Calculator</h4>
+        <label>Current Address: <input type="text" id="current" value="1000"></label>
+        <label style="margin-left:12px;">Target Address: <input type="text" id="target" value="1000"></label>
+        <button class="btn" style="margin-left:10px;" onclick="calculateJump()">Calculate</button>
+        <p id="result" style="margin-top:8px;"></p>
+      </div>
     </div>
-    <button class="btn" onclick="resetGrid()">Reset</button>
 
-    <div class="jump-calc">
-      <h4>Jump/Loop Offset Calculator</h4>
-      <label>Current Address: <input type="text" id="current" value="1000"></label>
-      <label>Target Address: <input type="text" id="target" value="1000"></label>
-      <button class="btn" onclick="calculateJump()">Calculate</button>
-      <p id="result"></p>
+    <div class="timeline-panel" id="timelinePanel" aria-label="Timeline and animation controls">
+      <div class="timeline-header">
+        <div style="display:flex;flex-direction:column;">
+          <strong>Timeline</strong>
+          <span style="font-size:12px;color:#666;">Frames you saved from the matrix</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="tabs">
+            <div class="tab active" id="tabFrames" onclick="switchTab('frames')">Frames</div>
+            <div class="tab" id="tabPlayer" onclick="switchTab('player')">Player</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="framesTab">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <button class="btn small" onclick="clearTimeline()">Clear timeline</button>
+          <button class="btn small" onclick="duplicateSelected()">Duplicate last</button>
+          <span style="margin-left:auto;font-size:12px;color:#666;" id="frameCount">0 frames</span>
+        </div>
+        <!-- Add near the timeline controls -->
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      <button class="btn small" id="saveLocalBtn">Save locally</button>
+      <button class="btn small" id="loadLocalBtn">Load local</button>
+      <button class="btn small" id="exportBtn">Export JSON</button>
+      <label class="btn small" style="cursor:pointer;">
+        Import JSON
+        <input id="importFile" type="file" accept="application/json" style="display:none;">
+      </label>
     </div>
+        <div class="frame-list" id="frameList"></div>
+      </div>
 
+      <div id="playerTab" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn" id="playBtn" onclick="togglePlay()">Play</button>
+            <button class="btn" onclick="stopTimeline()">Stop</button>
+            <label style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="loopToggle"> Loop
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+              Frame duration:
+              <input type="range" id="speedRange" min="50" max="2000" value="300" oninput="speedChanged()">
+            </label>
+          </div>
 
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="font-size:13px;">Speed: <span id="speedLabel">300</span> ms</div>
+            <div style="margin-left:auto;">
+              <button class="btn small" onclick="stepBackward()">◀</button>
+              <button class="btn small" onclick="stepForward()">▶</button>
+              <span style="margin-left:8px;font-size:13px;">Current: <span id="currentFrameIndex">-</span></span>
+            </div>
+          </div>
 
+          <div class="note">Use Frames tab to add, rename, reorder, or remove frames. Player uses the current timeline order for animation.</div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
-
+  <!-- Overlay modal for expanded preview -->
+  <div class="overlay" id="overlay">
+    <div class="preview-card" id="previewCard">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <strong id="previewTitle">Frame Preview</strong>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn small" onclick="closePreview()">Close</button>
+        </div>
+      </div>
+      <span id="previewHex" style="font-family:monospace;"></span>
+      <div class="preview-grid" id="previewGrid"></div>
+      <div style="margin-top:8px;">
+        <button class="btn" onclick="applyPreviewToGrid()">Apply to grid</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const grid = document.getElementById('grid');
     const inputs = document.getElementById('inputs');
     const cells = [];
+    let timeline = [];
+    let playing = false;
+    let playTimer = null;
+    let playIndex = 0;
 
     function start() {
-        dark();
-        resetGrid();
+      createGrid();
+      createHexInputs();
+      updateHex();
+      restoreSavedTheme();
+      document.getElementById('toggle').checked = false;
     }
 
-    function dark() {
-        var element = document.body;
-        element.classList.toggle("dark-mode");
-        element.classList.toggle("celldark");
+    function createGrid() {
+      grid.innerHTML = '';
+      cells.length = 0;
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          cell.addEventListener('click', () => { cell.classList.toggle('on'); updateHex(); });
+          grid.appendChild(cell);
+          cells.push(cell);
+        }
+      }
+    }
+
+    function createHexInputs() {
+      inputs.innerHTML = '';
+      for (let i = 0; i < 8; i++) {
+        const input = document.createElement('input');
+        input.readOnly = true;
+        inputs.appendChild(input);
+      }
     }
 
     function resetGrid() {
-        cells.forEach(cell => cell.classList.remove('on'));
-        updateHex();
+      cells.forEach(c => c.classList.remove('on'));
+      updateHex();
     }
 
     function calculateJump() {
       const currentHex = document.getElementById('current').value.trim();
       const targetHex = document.getElementById('target').value.trim();
-
       const current = parseInt(currentHex, 16);
       const target = parseInt(targetHex, 16);
-
       if (isNaN(current) || isNaN(target)) {
         document.getElementById('result').textContent = "Invalid hex input. Use values like 1000 or 100D.";
         return;
       }
-
-      const offset = target - current - 2; // 2 bytes for instruction
+      const offset = target - current - 2;
       const hexOffset = (offset & 0xFF).toString(16).padStart(2, '0').toUpperCase();
       const result = document.getElementById('result');
-
       if (offset >= -128 && offset <= 127) {
-        result.textContent = `JMP ${targetHex.toUpperCase()} → E9 ${hexOffset}`;
+        result.textContent = `JMP/LOOP ${targetHex.toUpperCase()} → E9/E2 ${hexOffset}`;
       } else {
         result.textContent = `Offset ${offset} out of range for short jump (-128 to +127)`;
       }
     }
 
-
-
-
-    // Create 64 cells (8x8)
-    for (let row = 0; row < 8; row++) {
-      for (let col = 0; col < 8; col++) {
-        const cell = document.createElement('div');
-        cell.classList.add('cell');
-        cell.dataset.row = row;
-        cell.dataset.col = col;
-        cell.addEventListener('click', () => {
-          cell.classList.toggle('on');
-          updateHex();
-        });
-        grid.appendChild(cell);
-        cells.push(cell);
-      }
-    }
-
-    // Create 8 input fields
-    const hexInputs = [];
-    for (let i = 0; i < 8; i++) {
-      const input = document.createElement('input');
-      input.readOnly = true;
-      inputs.appendChild(input);
-      hexInputs.push(input);
-    }
-
-    // Update hex values based on column states
+    // ORIGINAL mapping: ON => 0, OFF => 1 (top->bottom = MSB->LSB)
     function updateHex() {
+      const inputElems = inputs.querySelectorAll('input');
       for (let col = 0; col < 8; col++) {
         let binary = '';
         for (let row = 0; row < 8; row++) {
-          const cell = cells.find(c => c.dataset.row == row && c.dataset.col == col);
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           binary += cell.classList.contains('on') ? '0' : '1';
         }
         const hex = parseInt(binary, 2).toString(16).padStart(2, '0').toUpperCase();
-        hexInputs[col].value = hex;
+        inputElems[col].value = hex;
       }
     }
+
+    function captureCurrentFrame() {
+      const hexes = [];
+      const bits = [];
+      for (let col = 0; col < 8; col++) {
+        let binary = '';
+        for (let row = 0; row < 8; row++) {
+          const c = cells.find(x => +x.dataset.row === row && +x.dataset.col === col);
+          const bitForHex = c.classList.contains('on') ? 0 : 1;
+          binary += bitForHex.toString();
+          bits.push(c.classList.contains('on'));
+        }
+        hexes.push(parseInt(binary, 2).toString(16).padStart(2, '0').toUpperCase());
+      }
+      return { hexes, bits };
+    }
+
+    function applyFrame(idx) {
+      const f = timeline[idx];
+      if (!f) return;
+      for (let col = 0; col < 8; col++) {
+        for (let row = 0; row < 8; row++) {
+          const bitIndex = col*8 + row;
+          const c = cells.find(x => +x.dataset.row === row && +x.dataset.col === col);
+          if (f.bits[bitIndex]) c.classList.add('on'); else c.classList.remove('on');
+        }
+      }
+      updateHex();
+    }
+
+    // THEME KEY
+    const THEME_KEY = 'microkit_theme_v1';
+
+    // Apply theme by name: "dark" or "light"
+    function applyTheme(name) {
+      if (name === 'dark') document.body.classList.add('dark-mode');
+      else document.body.classList.remove('dark-mode');
+
+      // update UI toggle or button appearance if you have one
+      const themeToggle = document.getElementById('toggle');
+      if (themeToggle) {
+        try { themeToggle.checked = (name === 'dark'); } catch {}
+      }
+
+      // optional: set an attribute for CSS selectors if you want
+      document.documentElement.setAttribute('data-theme', name);
+    }
+
+    // Toggle theme and persist
+    function toggleThemeAndSave() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      const chosen = isDark ? 'dark' : 'light';
+      try { localStorage.setItem(THEME_KEY, chosen); } catch (e) {}
+      // reflect on toggle control if present
+      const themeToggle = document.getElementById('toggle');
+      if (themeToggle) themeToggle.checked = isDark;
+    }
+
+    // Restore theme from localStorage (call from start())
+    function restoreSavedTheme() {
+      try {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved === 'dark' || saved === 'light') {
+          applyTheme(saved);
+          return;
+        }
+      } catch (e) {}
+      // fallback: respect prefers-color-scheme if available
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        applyTheme('dark');
+      } else {
+        applyTheme('light');
+      }
+    }
+
+
+    // TIMELINE RENDER (REPLACED)
+    const frameListElem = document.getElementById('frameList');
+    const frameCountElem = document.getElementById('frameCount');
+
+    function showAddFrame() { document.getElementById('addFrameControls').style.display = 'flex'; document.getElementById('frameName').focus(); }
+    function hideAddFrame() { document.getElementById('addFrameControls').style.display = 'none'; document.getElementById('frameName').value = ''; }
+
+    function addToTimeline() {
+      const nameInput = document.getElementById('frameName');
+      const name = (nameInput.value || `Frame ${timeline.length+1}`).trim();
+      const captured = captureCurrentFrame();
+      timeline.push({ name, hex: captured.hexes, bits: captured.bits });
+      nameInput.value = '';
+      hideAddFrame();
+      renderTimeline();
+    }
+
+    function renderTimeline() {
+      frameListElem.innerHTML = '';
+      timeline.forEach((f, idx) => {
+        const frameDiv = document.createElement('div');
+        frameDiv.className = 'frame';
+        frameDiv.dataset.index = idx;
+
+        // left column: name (top) and mini grid (below)
+        const left = document.createElement('div');
+        left.className = 'frame-left';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'frame-name';
+        nameDiv.textContent = f.name;
+
+        const preview = document.createElement('div');
+        preview.className = 'mini-preview';
+        preview.title = 'Click to expand preview';
+        // create 64 dots in row-major visual order using stored column-major bits
+        for (let row = 0; row < 8; row++) {
+          for (let col = 0; col < 8; col++) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            const bitIndex = col * 8 + row;
+            if (f.bits[bitIndex]) dot.classList.add('on');
+            preview.appendChild(dot);
+          }
+        }
+        preview.onclick = () => openPreview(idx);
+
+        left.appendChild(nameDiv);
+        left.appendChild(preview);
+
+        // right column: actions
+        const actions = document.createElement('div');
+        actions.className = 'frame-actions';
+
+        const row1 = document.createElement('div');
+        row1.className = 'row';
+        const applyBtn = document.createElement('button');
+        applyBtn.className = 'btn small';
+        applyBtn.textContent = 'Apply';
+        applyBtn.onclick = () => applyFrame(idx);
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'btn small';
+        renameBtn.textContent = 'Rename';
+        renameBtn.onclick = () => renameFrame(idx);
+        row1.appendChild(applyBtn);
+        row1.appendChild(renameBtn);
+
+        const row2 = document.createElement('div');
+        row2.className = 'row';
+        const upBtn = document.createElement('button');
+        upBtn.className = 'btn small';
+        upBtn.textContent = '▲';
+        upBtn.title = 'Move up';
+        upBtn.onclick = () => moveFrameUp(idx);
+        const downBtn = document.createElement('button');
+        downBtn.className = 'btn small';
+        downBtn.textContent = '▼';
+        downBtn.title = 'Move down';
+        downBtn.onclick = () => moveFrameDown(idx);
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn small';
+        delBtn.textContent = 'Delete';
+        delBtn.onclick = () => removeFrame(idx);
+        row2.appendChild(upBtn);
+        row2.appendChild(downBtn);
+        row2.appendChild(delBtn);
+
+        actions.appendChild(row1);
+        actions.appendChild(row2);
+
+        // assemble item: left (name + grid) then right (buttons)
+        frameDiv.appendChild(left);
+        frameDiv.appendChild(actions);
+        frameListElem.appendChild(frameDiv);
+      });
+      frameCountElem.textContent = `${timeline.length} frame${timeline.length === 1 ? '' : 's'}`;
+      updatePlayerStateDisplay();
+    }
+
+    function removeFrame(idx) { if (idx < 0 || idx >= timeline.length) return; timeline.splice(idx, 1); renderTimeline(); }
+    function moveFrameUp(idx) { if (idx <= 0) return; const tmp = timeline[idx-1]; timeline[idx-1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
+    function moveFrameDown(idx) { if (idx >= timeline.length-1) return; const tmp = timeline[idx+1]; timeline[idx+1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
+    function renameFrame(idx) { const newName = prompt('Rename frame', timeline[idx].name); if (newName !== null) { timeline[idx].name = newName.trim() || timeline[idx].name; renderTimeline(); } }
+    function clearTimeline() { if (!confirm('Clear all frames from timeline?')) return; timeline = []; renderTimeline(); }
+    function duplicateSelected() { if (timeline.length === 0) return; const last = timeline[timeline.length-1]; const copy = { name: last.name + ' copy', hex: [...last.hex], bits: [...last.bits] }; timeline.push(copy); renderTimeline(); }
+
+    // preview modal
+    const overlay = document.getElementById('overlay');
+    const previewGrid = document.getElementById('previewGrid');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewHex = document.getElementById('previewHex');
+    let previewIndex = -1;
+
+    function openPreview(idx) {
+      const f = timeline[idx]; if (!f) return;
+      previewIndex = idx;
+      previewTitle.textContent = `Preview: ${f.name}`;
+      previewHex.textContent = f.hex.join(' ');
+      previewGrid.innerHTML = '';
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          const bitIndex = col*8 + row;
+          if (f.bits[bitIndex]) cell.classList.add('on');
+          previewGrid.appendChild(cell);
+        }
+      }
+      overlay.classList.add('show');
+    }
+    function closePreview() { overlay.classList.remove('show'); previewIndex = -1; }
+    function applyPreviewToGrid() { if (previewIndex < 0) return; applyFrame(previewIndex); closePreview(); }
+
+    // player controls (kept as before)
+    const speedRange = document.getElementById('speedRange');
+    const speedLabel = document.getElementById('speedLabel');
+    const playBtn = document.getElementById('playBtn');
+    const loopToggle = document.getElementById('loopToggle');
+    const currentFrameIndexLabel = document.getElementById('currentFrameIndex');
+
+    function switchTab(tab) {
+      document.getElementById('framesTab').style.display = tab === 'frames' ? 'block' : 'none';
+      document.getElementById('playerTab').style.display = tab === 'player' ? 'block' : 'none';
+      document.getElementById('tabFrames').classList.toggle('active', tab === 'frames');
+      document.getElementById('tabPlayer').classList.toggle('active', tab === 'player');
+    }
+
+    function togglePlay() { if (playing) stopTimeline(); else startTimeline(); }
+    function startTimeline() { if (timeline.length === 0) { alert('Timeline is empty. Add frames first.'); return; } playing = true; playBtn.textContent = 'Pause'; if (playIndex >= timeline.length) playIndex = 0; playStep(); }
+    function stopTimeline() { playing = false; playBtn.textContent = 'Play'; if (playTimer) { clearTimeout(playTimer); playTimer = null; } currentFrameIndexLabel.textContent = '-'; playIndex = 0; }
+    function playStep() { if (!playing) return; if (playIndex >= timeline.length) { if (loopToggle.checked) playIndex = 0; else { stopTimeline(); return; } } applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex+1) + '/' + timeline.length; const delay = parseInt(speedRange.value, 10); playIndex++; playTimer = setTimeout(playStep, delay); }
+    function speedChanged() { speedLabel.textContent = speedRange.value; }
+    function updatePlayerStateDisplay() { speedLabel.textContent = speedRange.value; currentFrameIndexLabel.textContent = timeline.length ? `- / ${timeline.length}` : '-'; }
+    function stepForward() { if (timeline.length === 0) return; playIndex = (playIndex < timeline.length - 1) ? playIndex + 1 : (loopToggle.checked ? 0 : playIndex); applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex+1) + '/' + timeline.length; }
+    function stepBackward() { if (timeline.length === 0) return; playIndex = (playIndex > 0) ? playIndex - 1 : (loopToggle.checked ? timeline.length - 1 : 0); applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex+1) + '/' + timeline.length; }
+
+    // --- Persistence and export/import helpers ---
+    const STORAGE_KEY = 'microkit_timeline_v1';
+
+    // Save current timeline to localStorage
+    function saveTimelineToLocal() {
+      try {
+        const payload = JSON.stringify(timeline);
+        localStorage.setItem(STORAGE_KEY, payload);
+        console.info('Timeline saved to localStorage');
+        alert('Successfully saved to timeline locally');
+      } catch (e) {
+        console.error('Save failed', e);
+        alert('Failed to save timeline locally');
+      }
+    }
+
+    // Load timeline from localStorage (overwrites current timeline)
+    function loadTimelineFromLocal() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) { alert('No saved timeline found in local storage'); return; }
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) throw new Error('Invalid format');
+        timeline = parsed;
+        renderTimeline();
+        updatePlayerStateDisplay();
+        alert('Timeline loaded from local storage');
+      } catch (e) {
+        console.error('Load failed', e);
+        alert('Failed to load timeline from local storage');
+      }
+    }
+
+    // Export timeline as JSON file
+    function exportTimelineJSON() {
+      try {
+        const payload = JSON.stringify(timeline, null, 2);
+        const blob = new Blob([payload], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `microkit_timeline_${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error('Export failed', e);
+        alert('Failed to export timeline');
+      }
+    }
+
+    // Import timeline from a File object (validates structure)
+    function importTimelineFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!Array.isArray(data)) throw new Error('Invalid format: expected array of frames');
+          // Optional: validate frame shape (name, hex array of length 8, bits length 64)
+          for (const f of data) {
+            if (typeof f.name !== 'string') throw new Error('Invalid frame: missing name');
+            if (!Array.isArray(f.hex) || f.hex.length !== 8) throw new Error('Invalid frame: hex must be array[8]');
+            if (!Array.isArray(f.bits) || f.bits.length !== 64) throw new Error('Invalid frame: bits must be array[64]');
+          }
+          timeline = data;
+          renderTimeline();
+          updatePlayerStateDisplay();
+          alert('Timeline imported successfully');
+        } catch (err) {
+          console.error('Import error', err);
+          alert('Failed to import file: ' + err.message);
+        }
+      };
+      reader.onerror = () => { alert('Error reading file'); };
+      reader.readAsText(file);
+    }
+
+    // Wire up UI
+    document.getElementById('saveLocalBtn').addEventListener('click', saveTimelineToLocal);
+    document.getElementById('loadLocalBtn').addEventListener('click', loadTimelineFromLocal);
+    document.getElementById('exportBtn').addEventListener('click', exportTimelineJSON);
+    document.getElementById('importFile').addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) importTimelineFile(f);
+      e.target.value = ''; // clear selection for subsequent imports
+    });
+
+    // init
+    start();
+    renderTimeline();
+    updatePlayerStateDisplay();
+
+    // overlay outside click closes
+    overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closePreview(); });
+
+    // debugging helpers
+    window._timeline = timeline;
+
   </script>
 </body>
 </html>
