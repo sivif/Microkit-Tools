@@ -343,6 +343,14 @@ body {
           <button class="btn small" onclick="hideAddFrame()">Cancel</button>
       </div>
 
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+        <button class="btn small" onclick="shiftLeft()">← Shift Left</button>
+        <button class="btn small" onclick="shiftRight()">→ Shift Right</button>
+        <button class="btn small" onclick="shiftUp()">↑ Shift Up</button>
+        <button class="btn small" onclick="shiftDown()">↓ Shift Down</button>
+      </div>
+
+
       <div class="jump-calc">
         <h4 style="margin:6px 0;">Jump/Loop Offset Calculator</h4>
         <label>Current Address: <input type="text" id="current" value="1000"></label>
@@ -540,6 +548,71 @@ body {
       }
       updateHex();
     }
+
+    function shiftLeft() {
+      for (let row = 0; row < 8; row++) {
+        const rowCells = [];
+        for (let col = 0; col < 8; col++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          rowCells.push(cell.classList.contains('on'));
+        }
+        rowCells.push(rowCells.shift()); // rotate left
+        for (let col = 0; col < 8; col++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          cell.classList.toggle('on', rowCells[col]);
+        }
+      }
+      updateHex();
+    }
+
+    function shiftRight() {
+      for (let row = 0; row < 8; row++) {
+        const rowCells = [];
+        for (let col = 0; col < 8; col++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          rowCells.push(cell.classList.contains('on'));
+        }
+        rowCells.unshift(rowCells.pop()); // rotate right
+        for (let col = 0; col < 8; col++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          cell.classList.toggle('on', rowCells[col]);
+        }
+      }
+      updateHex();
+    }
+
+    function shiftUp() {
+      for (let col = 0; col < 8; col++) {
+        const colCells = [];
+        for (let row = 0; row < 8; row++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          colCells.push(cell.classList.contains('on'));
+        }
+        colCells.push(colCells.shift()); // rotate up
+        for (let row = 0; row < 8; row++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          cell.classList.toggle('on', colCells[row]);
+        }
+      }
+      updateHex();
+    }
+
+    function shiftDown() {
+      for (let col = 0; col < 8; col++) {
+        const colCells = [];
+        for (let row = 0; row < 8; row++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          colCells.push(cell.classList.contains('on'));
+        }
+        colCells.unshift(colCells.pop()); // rotate down
+        for (let row = 0; row < 8; row++) {
+          const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
+          cell.classList.toggle('on', colCells[row]);
+        }
+      }
+      updateHex();
+    }
+
 
     // THEME KEY
     const THEME_KEY = 'microkit_theme_v1';
