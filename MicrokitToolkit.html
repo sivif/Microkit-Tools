@@ -454,8 +454,44 @@ body {
       createHexInputs();
       updateHex();
       restoreSavedTheme();
-      document.getElementById('toggle').checked = false;
+      // reflect restored theme state
+      const themeToggle = document.getElementById('toggle');
+      if (themeToggle) themeToggle.checked = document.body.classList.contains('dark-mode');
     }
+
+
+    // color cycle states: index 0 = off, 1..4 = colors
+    const CELL_COLORS = [ null, '#489e73', '#e94f4f', '#f4a300', '#f7e13d' ];
+
+    function getColorIndex(hex) {
+      if (!hex) return 0;
+      hex = hex.toUpperCase();
+      for (let i = 1; i < CELL_COLORS.length; i++) {
+        if (CELL_COLORS[i].toUpperCase() === hex) return i;
+      }
+      return 0;
+    }
+
+    function applyColorIndexToCell(cell, idx) {
+      const color = CELL_COLORS[idx] || null;
+      if (!color) {
+        cell.removeAttribute('data-color');
+        cell.classList.remove('on');
+        cell.style.backgroundColor = '';
+      } else {
+        cell.setAttribute('data-color', color);
+        cell.classList.add('on');
+        cell.style.backgroundColor = color;
+      }
+    }
+
+    function cycleCellColor(cell) {
+      const cur = cell.getAttribute('data-color');
+      let idx = getColorIndex(cur);
+      idx = (idx + 1) % CELL_COLORS.length; // advance and wrap
+      applyColorIndexToCell(cell, idx);
+    }
+
 
     function createGrid() {
       grid.innerHTML = '';
@@ -466,12 +502,20 @@ body {
           cell.classList.add('cell');
           cell.dataset.row = row;
           cell.dataset.col = col;
-          cell.addEventListener('click', () => { cell.classList.toggle('on'); updateHex(); });
+          // simple click cycles color/state
+          cell.addEventListener('click', () => {
+            cycleCellColor(cell);
+            updateHex();
+          });
+          // ensure touch-action doesn't interfere if you test on touch later
+          cell.style.touchAction = 'manipulation';
           grid.appendChild(cell);
           cells.push(cell);
         }
       }
     }
+
+
 
     function createHexInputs() {
       inputs.innerHTML = '';
@@ -483,9 +527,14 @@ body {
     }
 
     function resetGrid() {
-      cells.forEach(c => c.classList.remove('on'));
+      cells.forEach(c => {
+        c.classList.remove('on');
+        c.removeAttribute('data-color');
+        c.style.backgroundColor = '';
+      });
       updateHex();
     }
+
 
     function calculateJump() {
       const currentHex = document.getElementById('current').value.trim();
@@ -523,18 +572,23 @@ body {
     function captureCurrentFrame() {
       const hexes = [];
       const bits = [];
+      const colors = []; // 64 entries, null or "#RRGGBB"
       for (let col = 0; col < 8; col++) {
         let binary = '';
         for (let row = 0; row < 8; row++) {
           const c = cells.find(x => +x.dataset.row === row && +x.dataset.col === col);
-          const bitForHex = c.classList.contains('on') ? 0 : 1;
+          const isOn = c.classList.contains('on');
+          const bitForHex = isOn ? 0 : 1; // keep your existing mapping
           binary += bitForHex.toString();
-          bits.push(c.classList.contains('on'));
+          bits.push(isOn);
+          const colAttr = c.getAttribute('data-color');
+          colors.push(colAttr ? colAttr.toUpperCase() : null);
         }
         hexes.push(parseInt(binary, 2).toString(16).padStart(2, '0').toUpperCase());
       }
-      return { hexes, bits };
+      return { hexes, bits, colors };
     }
+
 
     function applyFrame(idx) {
       const f = timeline[idx];
@@ -543,23 +597,47 @@ body {
         for (let row = 0; row < 8; row++) {
           const bitIndex = col*8 + row;
           const c = cells.find(x => +x.dataset.row === row && +x.dataset.col === col);
-          if (f.bits[bitIndex]) c.classList.add('on'); else c.classList.remove('on');
+          // set ON/OFF
+          if (f.bits && f.bits[bitIndex]) c.classList.add('on'); else c.classList.remove('on');
+          // apply color if present
+          const colVal = f.colors && f.colors[bitIndex] ? f.colors[bitIndex] : null;
+          if (colVal) {
+            c.setAttribute('data-color', colVal);
+            if (c.classList.contains('on')) c.style.backgroundColor = colVal; else c.style.backgroundColor = '';
+          } else {
+            c.removeAttribute('data-color');
+            c.style.backgroundColor = '';
+          }
         }
       }
       updateHex();
     }
 
+
     function shiftLeft() {
       for (let row = 0; row < 8; row++) {
-        const rowCells = [];
+        const rowBits = [];
+        const rowColors = [];
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          rowCells.push(cell.classList.contains('on'));
+          rowBits.push(cell.classList.contains('on'));
+          rowColors.push(cell.getAttribute('data-color') || null);
         }
-        rowCells.push(rowCells.shift()); // rotate left
+        // rotate left (wrap)
+        rowBits.push(rowBits.shift());
+        rowColors.push(rowColors.shift());
+        // write back
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          cell.classList.toggle('on', rowCells[col]);
+          cell.classList.toggle('on', rowBits[col]);
+          const color = rowColors[col];
+          if (color) {
+            cell.setAttribute('data-color', color);
+            cell.style.backgroundColor = rowBits[col] ? color : '';
+          } else {
+            cell.removeAttribute('data-color');
+            cell.style.backgroundColor = '';
+          }
         }
       }
       updateHex();
@@ -567,15 +645,28 @@ body {
 
     function shiftRight() {
       for (let row = 0; row < 8; row++) {
-        const rowCells = [];
+        const rowBits = [];
+        const rowColors = [];
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          rowCells.push(cell.classList.contains('on'));
+          rowBits.push(cell.classList.contains('on'));
+          rowColors.push(cell.getAttribute('data-color') || null);
         }
-        rowCells.unshift(rowCells.pop()); // rotate right
+        // rotate right (wrap)
+        rowBits.unshift(rowBits.pop());
+        rowColors.unshift(rowColors.pop());
+        // write back
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          cell.classList.toggle('on', rowCells[col]);
+          cell.classList.toggle('on', rowBits[col]);
+          const color = rowColors[col];
+          if (color) {
+            cell.setAttribute('data-color', color);
+            cell.style.backgroundColor = rowBits[col] ? color : '';
+          } else {
+            cell.removeAttribute('data-color');
+            cell.style.backgroundColor = '';
+          }
         }
       }
       updateHex();
@@ -583,15 +674,28 @@ body {
 
     function shiftUp() {
       for (let col = 0; col < 8; col++) {
-        const colCells = [];
+        const colBits = [];
+        const colColors = [];
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          colCells.push(cell.classList.contains('on'));
+          colBits.push(cell.classList.contains('on'));
+          colColors.push(cell.getAttribute('data-color') || null);
         }
-        colCells.push(colCells.shift()); // rotate up
+        // rotate up (wrap)
+        colBits.push(colBits.shift());
+        colColors.push(colColors.shift());
+        // write back
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          cell.classList.toggle('on', colCells[row]);
+          cell.classList.toggle('on', colBits[row]);
+          const color = colColors[row];
+          if (color) {
+            cell.setAttribute('data-color', color);
+            cell.style.backgroundColor = colBits[row] ? color : '';
+          } else {
+            cell.removeAttribute('data-color');
+            cell.style.backgroundColor = '';
+          }
         }
       }
       updateHex();
@@ -599,19 +703,33 @@ body {
 
     function shiftDown() {
       for (let col = 0; col < 8; col++) {
-        const colCells = [];
+        const colBits = [];
+        const colColors = [];
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          colCells.push(cell.classList.contains('on'));
+          colBits.push(cell.classList.contains('on'));
+          colColors.push(cell.getAttribute('data-color') || null);
         }
-        colCells.unshift(colCells.pop()); // rotate down
+        // rotate down (wrap)
+        colBits.unshift(colBits.pop());
+        colColors.unshift(colColors.pop());
+        // write back
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
-          cell.classList.toggle('on', colCells[row]);
+          cell.classList.toggle('on', colBits[row]);
+          const color = colColors[row];
+          if (color) {
+            cell.setAttribute('data-color', color);
+            cell.style.backgroundColor = colBits[row] ? color : '';
+          } else {
+            cell.removeAttribute('data-color');
+            cell.style.backgroundColor = '';
+          }
         }
       }
       updateHex();
     }
+
 
 
     // THEME KEY
@@ -671,7 +789,7 @@ body {
       const nameInput = document.getElementById('frameName');
       const name = (nameInput.value || `Frame ${timeline.length+1}`).trim();
       const captured = captureCurrentFrame();
-      timeline.push({ name, hex: captured.hexes, bits: captured.bits });
+      timeline.push({ name, hex: captured.hexes, bits: captured.bits, colors: captured.colors });
       nameInput.value = '';
       hideAddFrame();
       renderTimeline();
@@ -701,7 +819,10 @@ body {
             const dot = document.createElement('div');
             dot.className = 'dot';
             const bitIndex = col * 8 + row;
-            if (f.bits[bitIndex]) dot.classList.add('on');
+            
+            if (f.bits && f.bits[bitIndex]) dot.classList.add('on');
+            if (f.colors && f.colors[bitIndex]) dot.style.backgroundColor = f.colors[bitIndex];
+
             preview.appendChild(dot);
           }
         }
@@ -764,7 +885,32 @@ body {
     function moveFrameDown(idx) { if (idx >= timeline.length-1) return; const tmp = timeline[idx+1]; timeline[idx+1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
     function renameFrame(idx) { const newName = prompt('Rename frame', timeline[idx].name); if (newName !== null) { timeline[idx].name = newName.trim() || timeline[idx].name; renderTimeline(); } }
     function clearTimeline() { if (!confirm('Clear all frames from timeline?')) return; timeline = []; renderTimeline(); }
-    function duplicateSelected() { if (timeline.length === 0) return; const last = timeline[timeline.length-1]; const copy = { name: last.name + ' copy', hex: [...last.hex], bits: [...last.bits] }; timeline.push(copy); renderTimeline(); }
+    function duplicateSelected() {
+      if (timeline.length === 0) return;
+      const last = timeline[timeline.length-1];
+      const copy = {
+        name: last.name + ' copy',
+        hex: last.hex ? [...last.hex] : new Array(8).fill('00'),
+        bits: last.bits ? [...last.bits] : new Array(64).fill(false),
+        colors: last.colors ? [...last.colors] : new Array(64).fill(null)
+      };
+      timeline.push(copy);
+      renderTimeline();
+    }
+
+
+    function normalizeFrame(f) {
+      f.hex = Array.isArray(f.hex) && f.hex.length === 8 ? f.hex : new Array(8).fill('00');
+      f.bits = Array.isArray(f.bits) && f.bits.length === 64 ? f.bits : new Array(64).fill(false);
+      if (!Array.isArray(f.colors) || f.colors.length !== 64) {
+        f.colors = new Array(64).fill(null);
+      } else {
+        f.colors = f.colors.map(c => c ? (''+c).toUpperCase() : null);
+      }
+      return f;
+    }
+
+
 
     // preview modal
     const overlay = document.getElementById('overlay');
@@ -785,6 +931,8 @@ body {
           cell.className = 'cell';
           const bitIndex = col*8 + row;
           if (f.bits[bitIndex]) cell.classList.add('on');
+          if (f.colors && f.colors[bitIndex]) cell.style.backgroundColor = f.colors[bitIndex];
+
           previewGrid.appendChild(cell);
         }
       }
@@ -839,7 +987,7 @@ body {
         if (!raw) { alert('No saved timeline found in local storage'); return; }
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) throw new Error('Invalid format');
-        timeline = parsed;
+        timeline = parsed.map(f => normalizeFrame(f));
         renderTimeline();
         updatePlayerStateDisplay();
         alert('Timeline loaded from local storage');
@@ -848,6 +996,7 @@ body {
         alert('Failed to load timeline from local storage');
       }
     }
+
 
     // Export timeline as JSON file
     function exportTimelineJSON() {
@@ -876,13 +1025,13 @@ body {
         try {
           const data = JSON.parse(ev.target.result);
           if (!Array.isArray(data)) throw new Error('Invalid format: expected array of frames');
-          // Optional: validate frame shape (name, hex array of length 8, bits length 64)
           for (const f of data) {
             if (typeof f.name !== 'string') throw new Error('Invalid frame: missing name');
             if (!Array.isArray(f.hex) || f.hex.length !== 8) throw new Error('Invalid frame: hex must be array[8]');
             if (!Array.isArray(f.bits) || f.bits.length !== 64) throw new Error('Invalid frame: bits must be array[64]');
           }
-          timeline = data;
+          // normalize and assign
+          timeline = data.map(f => normalizeFrame(f));
           renderTimeline();
           updatePlayerStateDisplay();
           alert('Timeline imported successfully');
@@ -891,6 +1040,7 @@ body {
           alert('Failed to import file: ' + err.message);
         }
       };
+
       reader.onerror = () => { alert('Error reading file'); };
       reader.readAsText(file);
     }
@@ -919,4 +1069,3 @@ body {
   </script>
 </body>
 </html>
-
