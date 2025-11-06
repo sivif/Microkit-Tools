@@ -1,362 +1,563 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>Microkit Toolkit</title>
   <style>
-    :root{
-  /* Light theme (defaults) */
-  --bg: #f9f9f9;
-  --panel: #ffffff;
-  --muted: #666666;
-  --text: #222222;
-  --muted-border: #dddddd;
-  --cell-off: #e0e0e0;
-  --cell-on: #489e73;
-  --control-bg: #F9F9F9;
-  --control-border: rgba(0,0,0,0.8);
-  --accent: #489e73;
-  --overlay-bg: rgba(0,0,0,0.5);
-  --card-shadow: rgba(0,0,0,0.12);
-}
+    :root {
+      /* Light theme (defaults) */
+      --bg: #f9f9f9;
+      --panel: #ffffff;
+      --muted: #666666;
+      --text: #222222;
+      --muted-border: #dddddd;
+      --cell-off: #e0e0e0;
+      --cell-on: #489e73;
+      --control-bg: #F9F9F9;
+      --control-border: rgba(0, 0, 0, 0.08);
+      --accent: #489e73;
+      --overlay-bg: rgba(0, 0, 0, 0.5);
+      --card-shadow: rgba(0, 0, 0, 0.12);
+    }
 
-/* Dark theme overrides (toggle by adding .dark-mode to body) */
-.dark-mode {
-  --bg: #1b1b1b;
-  --panel: #2b2b2b;
-  --muted: #bdbdbd;
-  --text: #e8e8e8;
-  --muted-border: #444444;
-  --cell-off: #1f1f1f;
-  --cell-on: #3b8a62;
-  --control-bg: #333333;
-  --control-border: #444444;
-  --accent: #3b8a62;
-  --overlay-bg: rgba(0,0,0,0.6);
-  --card-shadow: rgba(0,0,0,0.36);
-}
+    /* Dark theme overrides (toggle by adding .dark-mode to body) */
+    .dark-mode {
+      --bg: #1b1b1b;
+      --panel: #2b2b2b;
+      --muted: #bdbdbd;
+      --text: #e8e8e8;
+      --muted-border: #444444;
+      --cell-off: #1f1f1f;
+      --cell-on: #3b8a62;
+      --control-bg: #333333;
+      --control-border: #444444;
+      --accent: #3b8a62;
+      --overlay-bg: rgba(0, 0, 0, 0.6);
+      --card-shadow: rgba(0, 0, 0, 0.36);
+    }
 
-/* ===== Base layout ===== */
-* { box-sizing: border-box; }
-html,body { height: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  height: 100vh;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  transition: background-color 180ms ease, color 180ms ease;
-}
+    /* ===== Base layout ===== */
+    * {
+      box-sizing: border-box;
+    }
 
-/* Container columns */
-.container {
-  display: flex;
-  gap: 18px;
-  align-items: flex-start;
-  padding: 18px;
-  width: 1100px;
-  box-sizing: border-box;
-}
+    html,
+    body {
+      height: 100%;
+    }
 
-/* Left column (main) */
-.main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 640px;
-}
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 180ms ease, color 180ms ease;
+    }
 
-/* Title */
-.title {
-  text-align: center;
-  margin-bottom: 6px;
-}
-.title h4 { margin: 0; }
-.title h5 {
-  margin: 0;
-  font-weight: 400;
-  color: var(--muted);
-}
+    /* Container columns */
+    .container {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      padding: 18px;
+      width: 1100px;
+      box-sizing: border-box;
+    }
 
-/* ===== Matrix grid ===== */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(8, 30px);
-  grid-template-rows: repeat(8, 30px);
-  gap: 4px;
-  margin-bottom: 10px;
-  background: transparent;
-  touch-action: none; /* required for painting on touch devices */
-  -ms-touch-action: none;
-}
+    /* Left column (main) */
+    .main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 640px;
+    }
 
-.cell {
-  width: 30px;
-  height: 30px;
-  background-color: var(--cell-off);
-  border-radius: 250px;
-  transition: background-color 30ms linear, transform 80ms ease;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
-  display: inline-block;
-}
-.cell.on { background-color: var(--cell-on); }
-.cell:active { transform: scale(0.98); }
-.cell:hover { cursor: pointer; }
+    /* Title */
+    .title {
+      text-align: center;
+      margin-bottom: 6px;
+    }
 
-/* Hex inputs under grid */
-.inputs {
-  display: grid;
-  grid-template-columns: repeat(8, 30px);
-  gap: 4px;
-  margin-bottom: 8px;
-  align-items: center;
-  justify-items: center;
-}
-.inputs input {
-  width: 24px;
-  height: 24px;
-  text-align: center;
-  font-size: 12px;
-  border: 1px solid var(--muted-border);
-  border-radius: 4px;
-  background-color: var(--panel);
-  color: var(--text);
-}
+    .title h4 {
+      margin: 0;
+    }
 
-/* ===== Controls row ===== */
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-  width: 100%;
-  justify-content: center;
-}
+    .title h5 {
+      margin: 0;
+      font-weight: 400;
+      color: var(--muted);
+    }
 
-/* Left grouped controls and right anchored theme */
-.controls-left { display:flex; gap:8px; align-items:center; }
-.controls-right { display:flex; align-items:center; gap:6px; }
+    /* ===== Matrix grid ===== */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 30px);
+      grid-template-rows: repeat(8, 30px);
+      gap: 4px;
+      margin-bottom: 10px;
+      background: transparent;
+      touch-action: none;
+    }
 
-/* Buttons */
-.btn {
-  border: 1px solid var(--control-border);
-  border-radius: 100px;
-  padding: 8px 14px;
-  background-color: var(--control-bg);
-  color: var(--text);
-  transition: opacity 140ms ease, background-color 140ms ease, border-color 140ms ease;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-}
-.btn:hover { opacity: 0.9; }
-.small { padding: 6px 8px; border-radius: 8px; font-size: 12px; }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background-color: var(--cell-off);
+      border-radius: 250px;
+      transition: background-color 30ms linear, transform 80ms ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      display: inline-block;
+    }
 
-/* Arrow visual */
-.arrow-wrapper { display: flex; align-items: center; margin-top: 10px; margin-left: -5px; }
-.arrow-head-left {
-  width: 0; height: 0;
-  border-top: 10px solid transparent;
-  border-bottom: 10px solid transparent;
-  border-right: 20px solid var(--accent);
-}
-.arrow-line {
-  width: calc(8 * 30px + 7 * 4px - 20px);
-  height: 4px;
-  background-color: var(--accent);
-}
+    .cell.on {
+      background-color: var(--cell-on);
+    }
 
-/* Jump calc */
-.jump-calc { margin-top: 12px; text-align: left; font-size: 14px; width: 100%; color: var(--muted); }
-.jump-calc input { width: 80px; margin: 0 10px 0 6px; }
+    .cell:active {
+      transform: scale(0.98);
+    }
 
-/* ===== Timeline panel ===== */
-.timeline-panel {
-  width: 480px;
-  background: var(--panel);
-  border: 1px solid var(--muted-border);
-  border-radius: 8px;
-  padding: 12px;
-  box-sizing: border-box;
-  height: 640px;
-  overflow: auto;
-  color: var(--text);
-  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
-}
-.timeline-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.frame-list { display:flex; flex-direction:column; gap:8px; }
+    .cell:hover {
+      cursor: pointer;
+    }
 
-/* Timeline item layout */
-.frame {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border: 1px dashed var(--muted-border);
-  border-radius: 8px;
-  background: linear-gradient(transparent, transparent);
-  color: var(--text);
-}
-.frame-left {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-start;
-  flex: 0 0 auto;
-}
-.frame-name {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--text);
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 120px;
-}
+    /* Hex inputs under grid */
+    .inputs {
+      display: grid;
+      grid-template-columns: repeat(8, 30px);
+      gap: 4px;
+      margin-bottom: 8px;
+      align-items: center;
+      justify-items: center;
+    }
 
-/* Mini preview */
-.mini-preview {
-  display: grid;
-  grid-template-columns: repeat(8, 10px);
-  grid-template-rows: repeat(8, 10px);
-  gap: 2px;
-  width: calc(9 * 10px + 6 * 2px);
-  height: calc(9 * 10px + 6 * 2px);
-  border-radius: 3px;
-  overflow: hidden;
-  background: var(--panel);
-  padding: 4px;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-.mini-preview .dot { width: 10px; height: 10px; border-radius: 2px; background: var(--cell-off); transition: background 120ms linear; }
-.mini-preview .dot.on { background: var(--cell-on); }
+    .inputs input {
+      width: 24px;
+      height: 24px;
+      text-align: center;
+      font-size: 12px;
+      border: 1px solid var(--muted-border);
+      border-radius: 4px;
+      background-color: var(--panel);
+      color: var(--text);
+    }
 
-/* Actions on the right */
-.frame-actions {
-  display: flex;
-  flex-direction: row;
-  gap: 6px;
-  margin-left: auto;
-  align-items: flex-end;
-  flex: 0 0 auto;
-}
-.frame-actions .row { display:flex; gap:6px; }
+    /* ===== Controls row ===== */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      width: 100%;
+      justify-content: center;
+    }
 
-/* Tabs */
-.tabs { display:flex; gap:6px; margin-bottom: 10px; }
-.tab { padding:6px 10px; border-radius:6px; cursor:pointer; border:1px solid var(--muted-border); background: var(--panel); color: var(--text); }
-.tab.active { background: var(--accent); color: #fff; border-color: color-mix(in srgb, var(--accent) 60%, var(--muted-border)); }
+    .controls-left {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
 
-/* Dark-mode specific small overrides kept for compatibility */
-.dark-mode .inputs input { background: var(--panel); color: var(--text); border-color: var(--muted-border); }
-.dark-mode .btn { background: var(--control-bg); color: var(--text); border-color: var(--control-border); }
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-/* ===== Overlay / preview modal ===== */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--overlay-bg);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-.overlay.show { display: flex; }
-.preview-card {
-  background: var(--panel);
-  padding: 14px;
-  border-radius: 8px;
-  box-shadow: 0 6px 20px var(--card-shadow);
-  max-width: 90%;
-  max-height: 90%;
-  overflow: auto;
-  text-align: center;
-  color: var(--text);
-}
-.preview-grid {
-  display: grid;
-  grid-template-columns: repeat(8, 30px);
-  grid-template-rows: repeat(8, 30px);
-  gap: 6px;
-  margin: 12px auto;
-}
-.preview-grid .cell { width: 30px; height: 30px; border-radius: 4px; background: var(--cell-off); }
-.preview-grid .cell.on { background: var(--cell-on); }
+    /* Buttons */
+    .btn {
+      border: 1px solid var(--control-border);
+      border-radius: 100px;
+      padding: 8px 14px;
+      background-color: var(--control-bg);
+      color: var(--text);
+      transition: opacity 140ms ease, background-color 140ms ease, border-color 140ms ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
 
-/* Small helpers */
-.frame-note, .jump-calc span, .title h5 { color: var(--muted); }
+    .btn:hover {
+      opacity: 0.9;
+    }
 
-/* Responsive */
-@media (max-width: 1150px) {
-  .container { width: 100%; padding: 8px; flex-direction: column; align-items: stretch; }
-  .main { width: auto; }
-  .timeline-panel { width: 100%; height: 360px; }
-}
+    .small {
+      padding: 6px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
 
+    /* Arrow visual */
+    .arrow-wrapper {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      margin-left: -5px;
+    }
+
+    .arrow-head-left {
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-right: 20px solid var(--accent);
+    }
+
+    .arrow-line {
+      width: calc(8 * 30px + 7 * 4px - 20px);
+      height: 4px;
+      background-color: var(--accent);
+    }
+
+    /* Jump calc */
+    .jump-calc {
+      margin-top: 12px;
+      text-align: left;
+      font-size: 14px;
+      width: 100%;
+      color: var(--muted);
+    }
+
+    .jump-calc input {
+      width: 80px;
+      margin: 0 10px 0 6px;
+    }
+
+    /* ===== Timeline panel ===== */
+    .timeline-panel {
+      width: 480px;
+      background: var(--panel);
+      border: 1px solid var(--muted-border);
+      border-radius: 8px;
+      padding: 12px;
+      box-sizing: border-box;
+      height: 640px;
+      overflow: auto;
+      color: var(--text);
+      transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+    }
+
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .frame-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* Timeline item layout */
+    .frame {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      border: 1px dashed var(--muted-border);
+      border-radius: 8px;
+      background: linear-gradient(transparent, transparent);
+      color: var(--text);
+    }
+
+    .frame-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-start;
+      flex: 0 0 auto;
+    }
+
+    .frame-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text);
+      text-align: left;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 120px;
+    }
+
+    /* Mini preview */
+    .mini-preview {
+      display: grid;
+      grid-template-columns: repeat(8, 10px);
+      grid-template-rows: repeat(8, 10px);
+      gap: 2px;
+      width: calc(9 * 10px + 6 * 2px);
+      height: calc(9 * 10px + 6 * 2px);
+      border-radius: 3px;
+      overflow: hidden;
+      background: var(--panel);
+      padding: 4px;
+      box-sizing: border-box;
+      cursor: pointer;
+    }
+
+    .mini-preview .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background: var(--cell-off);
+      transition: background 120ms linear;
+    }
+
+    .mini-preview .dot.on {
+      background: var(--cell-on);
+    }
+
+    /* Actions on the right */
+    .frame-actions {
+      display: flex;
+      flex-direction: row;
+      gap: 6px;
+      margin-left: auto;
+      align-items: flex-end;
+      flex: 0 0 auto;
+    }
+
+    .frame-actions .row {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .tab {
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid var(--muted-border);
+      background: var(--panel);
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: color-mix(in srgb, var(--accent) 60%, var(--muted-border));
+    }
+
+    /* Dark-mode small overrides */
+    .dark-mode .inputs input {
+      background: var(--panel);
+      color: var(--text);
+      border-color: var(--muted-border);
+    }
+
+    .dark-mode .btn {
+      background: var(--control-bg);
+      color: var(--text);
+      border-color: var(--control-border);
+    }
+
+    /* ===== Overlay / preview modal ===== */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--overlay-bg);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .overlay.show {
+      display: flex;
+    }
+
+    .preview-card {
+      background: var(--panel);
+      padding: 14px;
+      border-radius: 8px;
+      box-shadow: 0 6px 20px var(--card-shadow);
+      max-width: 90%;
+      max-height: 90%;
+      overflow: auto;
+      text-align: center;
+      color: var(--text);
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 30px);
+      grid-template-rows: repeat(8, 30px);
+      gap: 6px;
+      margin: 12px auto;
+    }
+
+    .preview-grid .cell {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      background: var(--cell-off);
+    }
+
+    .preview-grid .cell.on {
+      background: var(--cell-on);
+    }
+
+    /* Small helpers */
+    .frame-note,
+    .jump-calc span,
+    .title h5 {
+      color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 1150px) {
+      .container {
+        width: 100%;
+        padding: 8px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .main {
+        width: auto;
+      }
+
+      .timeline-panel {
+        width: 100%;
+        height: 360px;
+      }
+    }
+
+    /* drag visual feedback for frames */
+    .frame.dragging {
+      opacity: 0.45;
+      border-style: solid;
+      border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+    }
+
+    /* subtle focus styles for keyboard navigation */
+    .btn:focus,
+    .copy-btn:focus,
+    .tab:focus {
+      outline: 3px solid color-mix(in srgb, var(--accent) 18%, transparent);
+      outline-offset: 2px;
+    }
+
+    /* utility: visually-hidden for accessible labels */
+    .visually-hidden {
+      position: absolute !important;
+      height: 1px;
+      width: 1px;
+      overflow: hidden;
+      clip: rect(1px, 1px, 1px, 1px);
+      white-space: nowrap;
+    }
+
+    /* small helper for muted pills */
+    .pill-muted {
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.03);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* keep transitions on color changes smooth for preview dots */
+    .mini-preview .dot,
+    .preview-grid .cell {
+      transition: background-color 120ms linear, transform 80ms ease;
+    }
   </style>
 </head>
+
 <body onload="start()">
   <div class="container">
     <div class="main">
       <div class="title">
         <h4 style="margin:0;">8×8 Matrix to Hexadecimal :)</h4>
         <h5 style="margin:0; font-weight:normal;">For micropro</h5>
+        <br>
       </div>
 
       <div class="grid" id="grid" aria-label="8 by 8 LED matrix"></div>
       <div class="inputs" id="inputs"></div>
 
       <div class="arrow-wrapper" style="margin-bottom:10px;">
-        <div class="arrow-head-left"></div>
-        <div class="arrow-line"></div>
+        <div class="arrow-head-left"
+          style="width:0;height:0;border-top:10px solid transparent;border-bottom:10px solid transparent;border-right:20px solid var(--accent);">
+        </div>
+        <div class="arrow-line"
+          style="width:calc(8 * 30px + 7 * 4px - 20px);height:4px;background-color:var(--accent);"></div>
       </div>
 
       <div class="controls-row">
         <div class="controls-left">
           <button class="btn" onclick="resetGrid()">Reset</button>
           <button class="btn" id="addFrameBtn" onclick="showAddFrame()">Add to timeline</button>
+          <!-- Fill controls -->
+          <label style="display:flex;align-items:center;gap:6px;margin-left:8px;">
+            <select id="fillColorSelect" class="btn small" style="padding:6px;border-radius:6px;">
+              <!-- options populated by JS -->
+            </select>
+            <button class="btn small" onclick="fillGrid()">Fill</button>
+          </label>
         </div>
 
         <div class="controls-right">
-          <label>
-            <input id="toggle" type="checkbox" style="display:none;" onclick="toggleThemeAndSave()">
-            <label class="btn" for="toggle">Theme</label>
+          <label style="display:flex;align-items:center;">
+            <input id="toggle" type="checkbox" style="display:none;" aria-hidden="true">
+            <button id="themeBtn" class="btn" aria-pressed="false" title="Toggle theme">
+              <span id="themeIcon"
+                style="display:inline-block;width:18px;height:18px;line-height:18px;font-size:14px;">🌙</span>
+            </button>
           </label>
+
         </div>
       </div>
 
       <div id="addFrameControls" style="display:none; align-items:center; gap:6px;">
-          <input id="frameName" placeholder="Frame name" style="padding:6px;border-radius:6px;border:1px solid #ccc;">
-          <button class="btn small" onclick="addToTimeline()">Save</button>
-          <button class="btn small" onclick="hideAddFrame()">Cancel</button>
+        <input id="frameName" placeholder="Frame name" style="padding:6px;border-radius:6px;border:1px solid #ccc;">
+        <button class="btn small" onclick="addOrOverwriteFrame()">Save</button>
+        <button class="btn small" onclick="hideAddFrame()">Cancel</button>
       </div>
 
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
-        <button class="btn small" onclick="shiftLeft()">← Shift Left</button>
-        <button class="btn small" onclick="shiftRight()">→ Shift Right</button>
-        <button class="btn small" onclick="shiftUp()">↑ Shift Up</button>
-        <button class="btn small" onclick="shiftDown()">↓ Shift Down</button>
+        <button class="btn small" onclick="shiftLeft()">
+          ← Shift Left</button>
+        <button class="btn small" onclick="shiftRight()">
+          → Shift Right</button>
+        <button class="btn small" onclick="shiftUp()">
+          ↑ Shift Up</button>
+        <button class="btn small" onclick="shiftDown()">
+          ↓ Shift Down</button>
       </div>
-
-
-      <div class="jump-calc">
+      <br>
+      <div class="jump-calc" style="margin-top:12px;text-align:left;font-size:14px;width:100%;color:var(--muted);">
         <h4 style="margin:6px 0;">Jump/Loop Offset Calculator</h4>
         <label>Current Address: <input type="text" id="current" value="1000"></label>
         <label style="margin-left:12px;">Target Address: <input type="text" id="target" value="1000"></label>
         <button class="btn" style="margin-left:10px;" onclick="calculateJump()">Calculate</button>
         <p id="result" style="margin-top:8px;"></p>
+      </div>
+      <div style="font-style: italic; font-size: 15px; margin-top: 20px; opacity: 60%;">
+        Update: Added Undo/Redo, Frame drag reordering, Frame Updating, Grid Fill, improved offset calculation, and UI
+        improvements.
       </div>
     </div>
 
@@ -380,16 +581,15 @@ body {
           <button class="btn small" onclick="duplicateSelected()">Duplicate last</button>
           <span style="margin-left:auto;font-size:12px;color:#666;" id="frameCount">0 frames</span>
         </div>
-        <!-- Add near the timeline controls -->
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-      <button class="btn small" id="saveLocalBtn">Save locally</button>
-      <button class="btn small" id="loadLocalBtn">Load local</button>
-      <button class="btn small" id="exportBtn">Export JSON</button>
-      <label class="btn small" style="cursor:pointer;">
-        Import JSON
-        <input id="importFile" type="file" accept="application/json" style="display:none;">
-      </label>
-    </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+          <button class="btn small" id="saveLocalBtn">Save locally</button>
+          <button class="btn small" id="loadLocalBtn">Load local</button>
+          <button class="btn small" id="exportBtn">Export JSON</button>
+          <label class="btn small" style="cursor:pointer;">
+            Import JSON
+            <input id="importFile" type="file" accept="application/json" style="display:none;">
+          </label>
+        </div>
         <div class="frame-list" id="frameList"></div>
       </div>
 
@@ -416,13 +616,13 @@ body {
             </div>
           </div>
 
-          <div class="note">Use Frames tab to add, rename, reorder, or remove frames. Player uses the current timeline order for animation.</div>
+          <div class="note">Use Frames tab to add, rename, reorder, or remove frames. Player uses the current timeline
+            order for animation.</div>
         </div>
       </div>
 
     </div>
   </div>
-
   <!-- Overlay modal for expanded preview -->
   <div class="overlay" id="overlay">
     <div class="preview-card" id="previewCard">
@@ -441,6 +641,7 @@ body {
   </div>
 
   <script>
+    /* --- DOM references --- */
     const grid = document.getElementById('grid');
     const inputs = document.getElementById('inputs');
     const cells = [];
@@ -449,29 +650,71 @@ body {
     let playTimer = null;
     let playIndex = 0;
 
-    function start() {
-      createGrid();
-      createHexInputs();
-      updateHex();
-      restoreSavedTheme();
-      // reflect restored theme state
-      const themeToggle = document.getElementById('toggle');
-      if (themeToggle) themeToggle.checked = document.body.classList.contains('dark-mode');
+    /* --- Colors --- */
+    const CELL_COLORS = [null, '#489e73', '#e94f4f', '#f4a300', '#f7e13d'];
+
+    /* --- History (undo/redo) --- */
+    const HISTORY_LIMIT = 60;
+    let historyStack = [];
+    let historyIndex = -1;
+    let isApplyingHistory = false;
+
+    function snapshotState() {
+      const gridBits = cells.map(c => c.classList.contains('on'));
+      const gridColors = cells.map(c => c.getAttribute('data-color') || null);
+      const tl = timeline.map(f => ({ name: f.name, hex: Array.from(f.hex || []), bits: Array.from(f.bits || []), colors: Array.from(f.colors || []) }));
+      return { gridBits, gridColors, timeline: tl };
     }
 
+    function applyHistorySnapshot(snap) {
+      if (!snap) return;
+      for (let i = 0; i < cells.length; i++) {
+        const on = !!snap.gridBits[i];
+        cells[i].classList.toggle('on', on);
+        const col = snap.gridColors[i];
+        if (col) { cells[i].setAttribute('data-color', col); cells[i].style.backgroundColor = on ? col : ''; }
+        else { cells[i].removeAttribute('data-color'); cells[i].style.backgroundColor = ''; }
+      }
+      timeline = snap.timeline.map(f => normalizeFrame(f));
+      renderTimeline();
+      updateHex();
+      updatePlayerStateDisplay();
+    }
 
-    // color cycle states: index 0 = off, 1..4 = colors
-    const CELL_COLORS = [ null, '#489e73', '#e94f4f', '#f4a300', '#f7e13d' ];
+    function pushHistory(actionLabel = '') {
+      if (isApplyingHistory) return;
+      const snap = snapshotState();
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push({ snap, label: actionLabel, ts: Date.now() });
+      if (historyStack.length > HISTORY_LIMIT) historyStack.shift();
+      historyIndex = historyStack.length - 1;
+    }
 
+    function undo() {
+      if (historyIndex <= 0) return;
+      historyIndex--;
+      const item = historyStack[historyIndex];
+      isApplyingHistory = true;
+      applyHistorySnapshot(item.snap);
+      isApplyingHistory = false;
+    }
+
+    function redo() {
+      if (historyIndex >= historyStack.length - 1) return;
+      historyIndex++;
+      const item = historyStack[historyIndex];
+      isApplyingHistory = true;
+      applyHistorySnapshot(item.snap);
+      isApplyingHistory = false;
+    }
+
+    /* --- Utilities --- */
     function getColorIndex(hex) {
       if (!hex) return 0;
       hex = hex.toUpperCase();
-      for (let i = 1; i < CELL_COLORS.length; i++) {
-        if (CELL_COLORS[i].toUpperCase() === hex) return i;
-      }
+      for (let i = 1; i < CELL_COLORS.length; i++) if (CELL_COLORS[i].toUpperCase() === hex) return i;
       return 0;
     }
-
     function applyColorIndexToCell(cell, idx) {
       const color = CELL_COLORS[idx] || null;
       if (!color) {
@@ -484,15 +727,14 @@ body {
         cell.style.backgroundColor = color;
       }
     }
-
     function cycleCellColor(cell) {
       const cur = cell.getAttribute('data-color');
       let idx = getColorIndex(cur);
-      idx = (idx + 1) % CELL_COLORS.length; // advance and wrap
+      idx = (idx + 1) % CELL_COLORS.length;
       applyColorIndexToCell(cell, idx);
     }
 
-
+    /* --- Grid creation & hex UI --- */
     function createGrid() {
       grid.innerHTML = '';
       cells.length = 0;
@@ -502,20 +744,17 @@ body {
           cell.classList.add('cell');
           cell.dataset.row = row;
           cell.dataset.col = col;
-          // simple click cycles color/state
           cell.addEventListener('click', () => {
             cycleCellColor(cell);
             updateHex();
+            pushHistory('paint cell');
           });
-          // ensure touch-action doesn't interfere if you test on touch later
           cell.style.touchAction = 'manipulation';
           grid.appendChild(cell);
           cells.push(cell);
         }
       }
     }
-
-
 
     function createHexInputs() {
       inputs.innerHTML = '';
@@ -526,36 +765,6 @@ body {
       }
     }
 
-    function resetGrid() {
-      cells.forEach(c => {
-        c.classList.remove('on');
-        c.removeAttribute('data-color');
-        c.style.backgroundColor = '';
-      });
-      updateHex();
-    }
-
-
-    function calculateJump() {
-      const currentHex = document.getElementById('current').value.trim();
-      const targetHex = document.getElementById('target').value.trim();
-      const current = parseInt(currentHex, 16);
-      const target = parseInt(targetHex, 16);
-      if (isNaN(current) || isNaN(target)) {
-        document.getElementById('result').textContent = "Invalid hex input. Use values like 1000 or 100D.";
-        return;
-      }
-      const offset = target - current - 2;
-      const hexOffset = (offset & 0xFF).toString(16).padStart(2, '0').toUpperCase();
-      const result = document.getElementById('result');
-      if (offset >= -128 && offset <= 127) {
-        result.textContent = `JMP/LOOP ${targetHex.toUpperCase()} → E9/E2 ${hexOffset}`;
-      } else {
-        result.textContent = `Offset ${offset} out of range for short jump (-128 to +127)`;
-      }
-    }
-
-    // ORIGINAL mapping: ON => 0, OFF => 1 (top->bottom = MSB->LSB)
     function updateHex() {
       const inputElems = inputs.querySelectorAll('input');
       for (let col = 0; col < 8; col++) {
@@ -569,16 +778,17 @@ body {
       }
     }
 
+    /* --- Frame capture / apply --- */
     function captureCurrentFrame() {
       const hexes = [];
       const bits = [];
-      const colors = []; // 64 entries, null or "#RRGGBB"
+      const colors = [];
       for (let col = 0; col < 8; col++) {
         let binary = '';
         for (let row = 0; row < 8; row++) {
           const c = cells.find(x => +x.dataset.row === row && +x.dataset.col === col);
           const isOn = c.classList.contains('on');
-          const bitForHex = isOn ? 0 : 1; // keep your existing mapping
+          const bitForHex = isOn ? 0 : 1;
           binary += bitForHex.toString();
           bits.push(isOn);
           const colAttr = c.getAttribute('data-color');
@@ -589,17 +799,14 @@ body {
       return { hexes, bits, colors };
     }
 
-
     function applyFrame(idx) {
       const f = timeline[idx];
       if (!f) return;
       for (let col = 0; col < 8; col++) {
         for (let row = 0; row < 8; row++) {
-          const bitIndex = col*8 + row;
+          const bitIndex = col * 8 + row;
           const c = cells.find(x => +x.dataset.row === row && +x.dataset.col === col);
-          // set ON/OFF
           if (f.bits && f.bits[bitIndex]) c.classList.add('on'); else c.classList.remove('on');
-          // apply color if present
           const colVal = f.colors && f.colors[bitIndex] ? f.colors[bitIndex] : null;
           if (colVal) {
             c.setAttribute('data-color', colVal);
@@ -611,188 +818,208 @@ body {
         }
       }
       updateHex();
+      pushHistory('apply frame');
     }
 
-
+    /* --- Shifts and fill --- */
+    function fillGrid() {
+      const sel = document.getElementById('fillColorSelect');
+      const val = sel.value || null;
+      cells.forEach(c => {
+        if (!val) {
+          c.removeAttribute('data-color');
+          c.classList.remove('on');
+          c.style.backgroundColor = '';
+        } else {
+          c.setAttribute('data-color', val.toUpperCase());
+          c.classList.add('on');
+          c.style.backgroundColor = val.toUpperCase();
+        }
+      });
+      updateHex();
+      pushHistory('fill');
+    }
+    function resetGrid() {
+      cells.forEach(c => { c.classList.remove('on'); c.removeAttribute('data-color'); c.style.backgroundColor = ''; });
+      updateHex();
+      pushHistory('reset grid');
+    }
     function shiftLeft() {
       for (let row = 0; row < 8; row++) {
-        const rowBits = [];
-        const rowColors = [];
+        const rowBits = []; const rowColors = [];
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           rowBits.push(cell.classList.contains('on'));
           rowColors.push(cell.getAttribute('data-color') || null);
         }
-        // rotate left (wrap)
-        rowBits.push(rowBits.shift());
-        rowColors.push(rowColors.shift());
-        // write back
+        rowBits.push(rowBits.shift()); rowColors.push(rowColors.shift());
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           cell.classList.toggle('on', rowBits[col]);
           const color = rowColors[col];
-          if (color) {
-            cell.setAttribute('data-color', color);
-            cell.style.backgroundColor = rowBits[col] ? color : '';
-          } else {
-            cell.removeAttribute('data-color');
-            cell.style.backgroundColor = '';
-          }
+          if (color) { cell.setAttribute('data-color', color); cell.style.backgroundColor = rowBits[col] ? color : ''; }
+          else { cell.removeAttribute('data-color'); cell.style.backgroundColor = ''; }
         }
       }
       updateHex();
+      pushHistory('shift left');
     }
-
     function shiftRight() {
       for (let row = 0; row < 8; row++) {
-        const rowBits = [];
-        const rowColors = [];
+        const rowBits = []; const rowColors = [];
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           rowBits.push(cell.classList.contains('on'));
           rowColors.push(cell.getAttribute('data-color') || null);
         }
-        // rotate right (wrap)
-        rowBits.unshift(rowBits.pop());
-        rowColors.unshift(rowColors.pop());
-        // write back
+        rowBits.unshift(rowBits.pop()); rowColors.unshift(rowColors.pop());
         for (let col = 0; col < 8; col++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           cell.classList.toggle('on', rowBits[col]);
           const color = rowColors[col];
-          if (color) {
-            cell.setAttribute('data-color', color);
-            cell.style.backgroundColor = rowBits[col] ? color : '';
-          } else {
-            cell.removeAttribute('data-color');
-            cell.style.backgroundColor = '';
-          }
+          if (color) { cell.setAttribute('data-color', color); cell.style.backgroundColor = rowBits[col] ? color : ''; }
+          else { cell.removeAttribute('data-color'); cell.style.backgroundColor = ''; }
         }
       }
       updateHex();
+      pushHistory('shift right');
     }
-
     function shiftUp() {
       for (let col = 0; col < 8; col++) {
-        const colBits = [];
-        const colColors = [];
+        const colBits = []; const colColors = [];
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           colBits.push(cell.classList.contains('on'));
           colColors.push(cell.getAttribute('data-color') || null);
         }
-        // rotate up (wrap)
-        colBits.push(colBits.shift());
-        colColors.push(colColors.shift());
-        // write back
+        colBits.push(colBits.shift()); colColors.push(colColors.shift());
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           cell.classList.toggle('on', colBits[row]);
           const color = colColors[row];
-          if (color) {
-            cell.setAttribute('data-color', color);
-            cell.style.backgroundColor = colBits[row] ? color : '';
-          } else {
-            cell.removeAttribute('data-color');
-            cell.style.backgroundColor = '';
-          }
+          if (color) { cell.setAttribute('data-color', color); cell.style.backgroundColor = colBits[row] ? color : ''; }
+          else { cell.removeAttribute('data-color'); cell.style.backgroundColor = ''; }
         }
       }
       updateHex();
+      pushHistory('shift up');
     }
-
     function shiftDown() {
       for (let col = 0; col < 8; col++) {
-        const colBits = [];
-        const colColors = [];
+        const colBits = []; const colColors = [];
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           colBits.push(cell.classList.contains('on'));
           colColors.push(cell.getAttribute('data-color') || null);
         }
-        // rotate down (wrap)
-        colBits.unshift(colBits.pop());
-        colColors.unshift(colColors.pop());
-        // write back
+        colBits.unshift(colBits.pop()); colColors.unshift(colColors.pop());
         for (let row = 0; row < 8; row++) {
           const cell = cells.find(c => +c.dataset.row === row && +c.dataset.col === col);
           cell.classList.toggle('on', colBits[row]);
           const color = colColors[row];
-          if (color) {
-            cell.setAttribute('data-color', color);
-            cell.style.backgroundColor = colBits[row] ? color : '';
-          } else {
-            cell.removeAttribute('data-color');
-            cell.style.backgroundColor = '';
-          }
+          if (color) { cell.setAttribute('data-color', color); cell.style.backgroundColor = colBits[row] ? color : ''; }
+          else { cell.removeAttribute('data-color'); cell.style.backgroundColor = ''; }
         }
       }
       updateHex();
+      pushHistory('shift down');
     }
 
-
-
-    // THEME KEY
-    const THEME_KEY = 'microkit_theme_v1';
-
-    // Apply theme by name: "dark" or "light"
-    function applyTheme(name) {
-      if (name === 'dark') document.body.classList.add('dark-mode');
-      else document.body.classList.remove('dark-mode');
-
-      // update UI toggle or button appearance if you have one
-      const themeToggle = document.getElementById('toggle');
-      if (themeToggle) {
-        try { themeToggle.checked = (name === 'dark'); } catch {}
-      }
-
-      // optional: set an attribute for CSS selectors if you want
-      document.documentElement.setAttribute('data-theme', name);
-    }
-
-    // Toggle theme and persist
-    function toggleThemeAndSave() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      const chosen = isDark ? 'dark' : 'light';
-      try { localStorage.setItem(THEME_KEY, chosen); } catch (e) {}
-      // reflect on toggle control if present
-      const themeToggle = document.getElementById('toggle');
-      if (themeToggle) themeToggle.checked = isDark;
-    }
-
-    // Restore theme from localStorage (call from start())
-    function restoreSavedTheme() {
-      try {
-        const saved = localStorage.getItem(THEME_KEY);
-        if (saved === 'dark' || saved === 'light') {
-          applyTheme(saved);
-          return;
-        }
-      } catch (e) {}
-      // fallback: respect prefers-color-scheme if available
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        applyTheme('dark');
-      } else {
-        applyTheme('light');
-      }
-    }
-
-
-    // TIMELINE RENDER (REPLACED)
+    /* --- Timeline drag helpers and rendering --- */
     const frameListElem = document.getElementById('frameList');
     const frameCountElem = document.getElementById('frameCount');
+
+    let dragIndex = -1;
+    let insertMarker = null;
+
+    function createInsertMarker() {
+      if (insertMarker) return;
+      insertMarker = document.createElement('div');
+      insertMarker.style.height = '2px';
+      insertMarker.style.background = 'var(--accent)';
+      insertMarker.style.position = 'relative';
+      insertMarker.style.margin = '4px 0';
+      insertMarker.style.borderRadius = '2px';
+      insertMarker.className = 'insert-marker';
+    }
+
+    function enableDragOnFrame(frameDiv, idx) {
+      frameDiv.setAttribute('draggable', 'true');
+      frameDiv.addEventListener('dragstart', (e) => {
+        dragIndex = idx;
+        frameDiv.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', String(idx)); } catch { }
+        createInsertMarker();
+      });
+      frameDiv.addEventListener('dragend', () => {
+        dragIndex = -1;
+        frameDiv.classList.remove('dragging');
+        removeInsertMarkers();
+      });
+
+      frameDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const rect = frameDiv.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        removeInsertMarkers();
+        if (e.clientY < mid) {
+          frameListElem.insertBefore(insertMarker, frameDiv);
+          insertMarker.dataset.target = frameDiv.dataset.index;
+          insertMarker.dataset.before = '1';
+        } else {
+          if (frameDiv.nextSibling) frameListElem.insertBefore(insertMarker, frameDiv.nextSibling);
+          else frameListElem.appendChild(insertMarker);
+          insertMarker.dataset.target = frameDiv.dataset.index;
+          insertMarker.dataset.before = '0';
+        }
+      });
+
+      frameDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const source = dragIndex >= 0 ? dragIndex : parseInt(e.dataTransfer.getData('text/plain') || '-1', 10);
+        let target = parseInt(frameDiv.dataset.index, 10);
+        if (insertMarker && insertMarker.parentNode === frameListElem) {
+          const before = insertMarker.dataset.before === '1';
+          if (!before) target = target + 1;
+        }
+        removeInsertMarkers();
+        if (source >= 0 && target >= 0) {
+          const item = timeline.splice(source, 1)[0];
+          const adjustedTarget = source < target ? target - 1 : target;
+          timeline.splice(adjustedTarget, 0, item);
+          renderTimeline();
+          pushHistory('move frame');
+        }
+      });
+    }
+
+    function removeInsertMarkers() {
+      if (!insertMarker) return;
+      if (insertMarker.parentNode) insertMarker.parentNode.removeChild(insertMarker);
+    }
+
+    function normalizeFrame(f) {
+      f = Object.assign({}, f);
+      f.hex = Array.isArray(f.hex) && f.hex.length === 8 ? f.hex : new Array(8).fill('00');
+      f.bits = Array.isArray(f.bits) && f.bits.length === 64 ? f.bits : new Array(64).fill(false);
+      if (!Array.isArray(f.colors) || f.colors.length !== 64) f.colors = new Array(64).fill(null);
+      else f.colors = f.colors.map(c => c ? ('' + c).toUpperCase() : null);
+      return f;
+    }
 
     function showAddFrame() { document.getElementById('addFrameControls').style.display = 'flex'; document.getElementById('frameName').focus(); }
     function hideAddFrame() { document.getElementById('addFrameControls').style.display = 'none'; document.getElementById('frameName').value = ''; }
 
     function addToTimeline() {
       const nameInput = document.getElementById('frameName');
-      const name = (nameInput.value || `Frame ${timeline.length+1}`).trim();
+      const name = (nameInput.value || `Frame ${timeline.length + 1}`).trim();
       const captured = captureCurrentFrame();
       timeline.push({ name, hex: captured.hexes, bits: captured.bits, colors: captured.colors });
       nameInput.value = '';
       hideAddFrame();
       renderTimeline();
+      pushHistory('add frame');
     }
 
     function renderTimeline() {
@@ -802,7 +1029,6 @@ body {
         frameDiv.className = 'frame';
         frameDiv.dataset.index = idx;
 
-        // left column: name (top) and mini grid (below)
         const left = document.createElement('div');
         left.className = 'frame-left';
 
@@ -813,16 +1039,13 @@ body {
         const preview = document.createElement('div');
         preview.className = 'mini-preview';
         preview.title = 'Click to expand preview';
-        // create 64 dots in row-major visual order using stored column-major bits
         for (let row = 0; row < 8; row++) {
           for (let col = 0; col < 8; col++) {
             const dot = document.createElement('div');
             dot.className = 'dot';
             const bitIndex = col * 8 + row;
-            
             if (f.bits && f.bits[bitIndex]) dot.classList.add('on');
             if (f.colors && f.colors[bitIndex]) dot.style.backgroundColor = f.colors[bitIndex];
-
             preview.appendChild(dot);
           }
         }
@@ -831,63 +1054,41 @@ body {
         left.appendChild(nameDiv);
         left.appendChild(preview);
 
-        // right column: actions
         const actions = document.createElement('div');
         actions.className = 'frame-actions';
 
-        const row1 = document.createElement('div');
-        row1.className = 'row';
-        const applyBtn = document.createElement('button');
-        applyBtn.className = 'btn small';
-        applyBtn.textContent = 'Apply';
-        applyBtn.onclick = () => applyFrame(idx);
-        const renameBtn = document.createElement('button');
-        renameBtn.className = 'btn small';
-        renameBtn.textContent = 'Rename';
-        renameBtn.onclick = () => renameFrame(idx);
-        row1.appendChild(applyBtn);
-        row1.appendChild(renameBtn);
+        const row1 = document.createElement('div'); row1.className = 'row';
+        const applyBtn = document.createElement('button'); applyBtn.className = 'btn small'; applyBtn.textContent = 'Apply'; applyBtn.onclick = () => { applyFrame(idx); };
+        const renameBtn = document.createElement('button'); renameBtn.className = 'btn small'; renameBtn.textContent = 'Rename'; renameBtn.onclick = () => renameFrame(idx);
+        row1.appendChild(applyBtn); row1.appendChild(renameBtn);
 
-        const row2 = document.createElement('div');
-        row2.className = 'row';
-        const upBtn = document.createElement('button');
-        upBtn.className = 'btn small';
-        upBtn.textContent = '▲';
-        upBtn.title = 'Move up';
-        upBtn.onclick = () => moveFrameUp(idx);
-        const downBtn = document.createElement('button');
-        downBtn.className = 'btn small';
-        downBtn.textContent = '▼';
-        downBtn.title = 'Move down';
-        downBtn.onclick = () => moveFrameDown(idx);
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn small';
-        delBtn.textContent = 'Delete';
-        delBtn.onclick = () => removeFrame(idx);
-        row2.appendChild(upBtn);
-        row2.appendChild(downBtn);
-        row2.appendChild(delBtn);
+        const row2 = document.createElement('div'); row2.className = 'row';
+        const upBtn = document.createElement('button'); upBtn.className = 'btn small'; upBtn.textContent = '\u25b2'; upBtn.title = 'Move up'; upBtn.onclick = () => { moveFrameUp(idx); pushHistory('move up'); };
+        const downBtn = document.createElement('button'); downBtn.className = 'btn small'; downBtn.textContent = '\u25bc'; downBtn.title = 'Move down'; downBtn.onclick = () => { moveFrameDown(idx); pushHistory('move down'); };
+        const delBtn = document.createElement('button'); delBtn.className = 'btn small'; delBtn.textContent = 'Delete'; delBtn.onclick = () => { removeFrame(idx); pushHistory('delete frame'); };
+        row2.appendChild(upBtn); row2.appendChild(downBtn); row2.appendChild(delBtn);
 
-        actions.appendChild(row1);
-        actions.appendChild(row2);
+        actions.appendChild(row1); actions.appendChild(row2);
 
-        // assemble item: left (name + grid) then right (buttons)
         frameDiv.appendChild(left);
         frameDiv.appendChild(actions);
+
+        enableDragOnFrame(frameDiv, idx);
         frameListElem.appendChild(frameDiv);
       });
       frameCountElem.textContent = `${timeline.length} frame${timeline.length === 1 ? '' : 's'}`;
       updatePlayerStateDisplay();
     }
 
+    /* timeline operations */
     function removeFrame(idx) { if (idx < 0 || idx >= timeline.length) return; timeline.splice(idx, 1); renderTimeline(); }
-    function moveFrameUp(idx) { if (idx <= 0) return; const tmp = timeline[idx-1]; timeline[idx-1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
-    function moveFrameDown(idx) { if (idx >= timeline.length-1) return; const tmp = timeline[idx+1]; timeline[idx+1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
-    function renameFrame(idx) { const newName = prompt('Rename frame', timeline[idx].name); if (newName !== null) { timeline[idx].name = newName.trim() || timeline[idx].name; renderTimeline(); } }
-    function clearTimeline() { if (!confirm('Clear all frames from timeline?')) return; timeline = []; renderTimeline(); }
+    function moveFrameUp(idx) { if (idx <= 0) return; const tmp = timeline[idx - 1]; timeline[idx - 1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
+    function moveFrameDown(idx) { if (idx >= timeline.length - 1) return; const tmp = timeline[idx + 1]; timeline[idx + 1] = timeline[idx]; timeline[idx] = tmp; renderTimeline(); }
+    function renameFrame(idx) { const newName = prompt('Rename frame', timeline[idx].name); if (newName !== null) { timeline[idx].name = newName.trim() || timeline[idx].name; renderTimeline(); pushHistory('rename'); } }
+    function clearTimeline() { if (!confirm('Clear all frames from timeline?')) return; timeline = []; renderTimeline(); pushHistory('clear timeline'); }
     function duplicateSelected() {
       if (timeline.length === 0) return;
-      const last = timeline[timeline.length-1];
+      const last = timeline[timeline.length - 1];
       const copy = {
         name: last.name + ' copy',
         hex: last.hex ? [...last.hex] : new Array(8).fill('00'),
@@ -896,23 +1097,10 @@ body {
       };
       timeline.push(copy);
       renderTimeline();
+      pushHistory('duplicate frame');
     }
 
-
-    function normalizeFrame(f) {
-      f.hex = Array.isArray(f.hex) && f.hex.length === 8 ? f.hex : new Array(8).fill('00');
-      f.bits = Array.isArray(f.bits) && f.bits.length === 64 ? f.bits : new Array(64).fill(false);
-      if (!Array.isArray(f.colors) || f.colors.length !== 64) {
-        f.colors = new Array(64).fill(null);
-      } else {
-        f.colors = f.colors.map(c => c ? (''+c).toUpperCase() : null);
-      }
-      return f;
-    }
-
-
-
-    // preview modal
+    /* preview modal */
     const overlay = document.getElementById('overlay');
     const previewGrid = document.getElementById('previewGrid');
     const previewTitle = document.getElementById('previewTitle');
@@ -923,16 +1111,15 @@ body {
       const f = timeline[idx]; if (!f) return;
       previewIndex = idx;
       previewTitle.textContent = `Preview: ${f.name}`;
-      previewHex.textContent = f.hex.join(' ');
+      previewHex.textContent = f.hex ? f.hex.join(' ') : '';
       previewGrid.innerHTML = '';
       for (let row = 0; row < 8; row++) {
         for (let col = 0; col < 8; col++) {
           const cell = document.createElement('div');
           cell.className = 'cell';
-          const bitIndex = col*8 + row;
-          if (f.bits[bitIndex]) cell.classList.add('on');
+          const bitIndex = col * 8 + row;
+          if (f.bits && f.bits[bitIndex]) cell.classList.add('on');
           if (f.colors && f.colors[bitIndex]) cell.style.backgroundColor = f.colors[bitIndex];
-
           previewGrid.appendChild(cell);
         }
       }
@@ -941,7 +1128,7 @@ body {
     function closePreview() { overlay.classList.remove('show'); previewIndex = -1; }
     function applyPreviewToGrid() { if (previewIndex < 0) return; applyFrame(previewIndex); closePreview(); }
 
-    // player controls (kept as before)
+    /* --- Player / controls --- */
     const speedRange = document.getElementById('speedRange');
     const speedLabel = document.getElementById('speedLabel');
     const playBtn = document.getElementById('playBtn');
@@ -954,33 +1141,32 @@ body {
       document.getElementById('tabFrames').classList.toggle('active', tab === 'frames');
       document.getElementById('tabPlayer').classList.toggle('active', tab === 'player');
     }
-
     function togglePlay() { if (playing) stopTimeline(); else startTimeline(); }
     function startTimeline() { if (timeline.length === 0) { alert('Timeline is empty. Add frames first.'); return; } playing = true; playBtn.textContent = 'Pause'; if (playIndex >= timeline.length) playIndex = 0; playStep(); }
     function stopTimeline() { playing = false; playBtn.textContent = 'Play'; if (playTimer) { clearTimeout(playTimer); playTimer = null; } currentFrameIndexLabel.textContent = '-'; playIndex = 0; }
-    function playStep() { if (!playing) return; if (playIndex >= timeline.length) { if (loopToggle.checked) playIndex = 0; else { stopTimeline(); return; } } applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex+1) + '/' + timeline.length; const delay = parseInt(speedRange.value, 10); playIndex++; playTimer = setTimeout(playStep, delay); }
+    function playStep() {
+      if (!playing) return;
+      if (playIndex >= timeline.length) {
+        if (loopToggle.checked) playIndex = 0;
+        else { stopTimeline(); return; }
+      }
+      applyFrame(playIndex);
+      currentFrameIndexLabel.textContent = (playIndex + 1) + '/' + timeline.length;
+      const delay = parseInt(speedRange.value, 10);
+      playIndex++;
+      playTimer = setTimeout(playStep, delay);
+    }
     function speedChanged() { speedLabel.textContent = speedRange.value; }
     function updatePlayerStateDisplay() { speedLabel.textContent = speedRange.value; currentFrameIndexLabel.textContent = timeline.length ? `- / ${timeline.length}` : '-'; }
-    function stepForward() { if (timeline.length === 0) return; playIndex = (playIndex < timeline.length - 1) ? playIndex + 1 : (loopToggle.checked ? 0 : playIndex); applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex+1) + '/' + timeline.length; }
-    function stepBackward() { if (timeline.length === 0) return; playIndex = (playIndex > 0) ? playIndex - 1 : (loopToggle.checked ? timeline.length - 1 : 0); applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex+1) + '/' + timeline.length; }
+    function stepForward() { if (timeline.length === 0) return; playIndex = (playIndex < timeline.length - 1) ? playIndex + 1 : (loopToggle.checked ? 0 : playIndex); applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex + 1) + '/' + timeline.length; }
+    function stepBackward() { if (timeline.length === 0) return; playIndex = (playIndex > 0) ? playIndex - 1 : (loopToggle.checked ? timeline.length - 1 : 0); applyFrame(playIndex); currentFrameIndexLabel.textContent = (playIndex + 1) + '/' + timeline.length; }
 
-    // --- Persistence and export/import helpers ---
+    /* --- Persistence, import/export --- */
     const STORAGE_KEY = 'microkit_timeline_v1';
-
-    // Save current timeline to localStorage
     function saveTimelineToLocal() {
-      try {
-        const payload = JSON.stringify(timeline);
-        localStorage.setItem(STORAGE_KEY, payload);
-        console.info('Timeline saved to localStorage');
-        alert('Successfully saved to timeline locally');
-      } catch (e) {
-        console.error('Save failed', e);
-        alert('Failed to save timeline locally');
-      }
+      try { const payload = JSON.stringify(timeline); localStorage.setItem(STORAGE_KEY, payload); console.info('Timeline saved to localStorage'); alert('Successfully saved to timeline locally'); }
+      catch (e) { console.error('Save failed', e); alert('Failed to save timeline locally'); }
     }
-
-    // Load timeline from localStorage (overwrites current timeline)
     function loadTimelineFromLocal() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -990,15 +1176,11 @@ body {
         timeline = parsed.map(f => normalizeFrame(f));
         renderTimeline();
         updatePlayerStateDisplay();
+        pushHistory('load timeline');
         alert('Timeline loaded from local storage');
-      } catch (e) {
-        console.error('Load failed', e);
-        alert('Failed to load timeline from local storage');
-      }
+      } catch (e) { console.error('Load failed', e); alert('Failed to load timeline from local storage'); }
     }
 
-
-    // Export timeline as JSON file
     function exportTimelineJSON() {
       try {
         const payload = JSON.stringify(timeline, null, 2);
@@ -1006,18 +1188,14 @@ body {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `microkit_timeline_${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+        a.download = `microkit_timeline_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
         document.body.appendChild(a);
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
-      } catch (e) {
-        console.error('Export failed', e);
-        alert('Failed to export timeline');
-      }
+      } catch (e) { console.error('Export failed', e); alert('Failed to export timeline'); }
     }
 
-    // Import timeline from a File object (validates structure)
     function importTimelineFile(file) {
       if (!file) return;
       const reader = new FileReader();
@@ -1030,42 +1208,206 @@ body {
             if (!Array.isArray(f.hex) || f.hex.length !== 8) throw new Error('Invalid frame: hex must be array[8]');
             if (!Array.isArray(f.bits) || f.bits.length !== 64) throw new Error('Invalid frame: bits must be array[64]');
           }
-          // normalize and assign
           timeline = data.map(f => normalizeFrame(f));
           renderTimeline();
           updatePlayerStateDisplay();
+          pushHistory('import timeline');
           alert('Timeline imported successfully');
-        } catch (err) {
-          console.error('Import error', err);
-          alert('Failed to import file: ' + err.message);
-        }
+        } catch (err) { console.error('Import error', err); alert('Failed to import file: ' + err.message); }
       };
-
       reader.onerror = () => { alert('Error reading file'); };
       reader.readAsText(file);
     }
 
-    // Wire up UI
+    /* --- Keyboard shortcuts for undo/redo --- */
+    window.addEventListener('keydown', (e) => {
+      const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+      const mod = isMac ? e.metaKey : e.ctrlKey;
+      if (mod && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+      } else if (mod && (e.key.toLowerCase() === 'y')) {
+        e.preventDefault();
+        redo();
+      }
+    });
+
+    /* --- Wire UI --- */
     document.getElementById('saveLocalBtn').addEventListener('click', saveTimelineToLocal);
     document.getElementById('loadLocalBtn').addEventListener('click', loadTimelineFromLocal);
     document.getElementById('exportBtn').addEventListener('click', exportTimelineJSON);
-    document.getElementById('importFile').addEventListener('change', (e) => {
-      const f = e.target.files && e.target.files[0];
-      if (f) importTimelineFile(f);
-      e.target.value = ''; // clear selection for subsequent imports
-    });
+    document.getElementById('importFile').addEventListener('change', (e) => { const f = e.target.files && e.target.files[0]; if (f) importTimelineFile(f); e.target.value = ''; });
 
-    // init
+    /* --- Init --- */
+    function start() {
+      createGrid();
+      createHexInputs();
+      populateFillSelect();
+      updateHex();
+      restoreSavedTheme();
+      const themeToggle = document.getElementById('toggle');
+      if (themeToggle) themeToggle.checked = document.body.classList.contains('dark-mode');
+      // initial history snapshot
+      pushHistory('initial');
+    }
     start();
     renderTimeline();
     updatePlayerStateDisplay();
 
-    // overlay outside click closes
     overlay.addEventListener('click', (ev) => { if (ev.target === overlay) closePreview(); });
-
-    // debugging helpers
     window._timeline = timeline;
 
+    function populateFillSelect() {
+      const sel = document.getElementById('fillColorSelect');
+      if (!sel) return;
+      sel.innerHTML = '';
+      const namedColors = [
+        { name: 'Off', hex: '' },
+        { name: 'Green', hex: '#489e73' },
+        { name: 'Red', hex: '#e94f4f' },
+        { name: 'Orange', hex: '#f4a300' },
+        { name: 'Yellow', hex: '#f7e13d' }
+      ];
+      for (const c of namedColors) {
+        const opt = document.createElement('option');
+        opt.value = c.hex;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+    }
+
+    /* --- Theme helpers --- */
+    function setThemeIcon(isDark) {
+      const icon = document.getElementById('themeIcon');
+      const btn = document.getElementById('themeBtn');
+      if (!icon || !btn) return;
+      icon.textContent = isDark ? '\ud83c\udf19' : '\u2600\ufe0f';
+      btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    }
+    function toggleThemeAndSaveWithIcon() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      const chosen = isDark ? 'dark' : 'light';
+      try { localStorage.setItem(THEME_KEY, chosen); } catch (e) { }
+      const themeToggle = document.getElementById('toggle');
+      if (themeToggle) themeToggle.checked = isDark;
+      setThemeIcon(isDark);
+    }
+    function applyThemeWithIcon(name) {
+      if (name === 'dark') document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode');
+      document.documentElement.setAttribute('data-theme', name);
+      const isDark = document.body.classList.contains('dark-mode');
+      const themeToggle = document.getElementById('toggle');
+      if (themeToggle) { try { themeToggle.checked = isDark; } catch { } }
+      setThemeIcon(isDark);
+    }
+    function restoreSavedTheme() {
+      try {
+        const saved = localStorage.getItem(THEME_KEY);
+        if (saved === 'dark' || saved === 'light') { applyThemeWithIcon(saved); return; }
+      } catch (e) { }
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) applyThemeWithIcon('dark'); else applyThemeWithIcon('light');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.addEventListener('click', (e) => { e.preventDefault(); toggleThemeAndSaveWithIcon(); });
+      setThemeIcon(document.body.classList.contains('dark-mode'));
+    });
+
+    /* --- Add / Overwrite frame helper kept for convenience --- */
+    function addOrOverwriteFrame() {
+      const nameInput = document.getElementById('frameName');
+      const name = (nameInput.value || `Frame ${timeline.length + 1}`).trim();
+      const captured = captureCurrentFrame();
+      const idx = timeline.findIndex(f => f.name === name);
+      const frameObj = { name, hex: captured.hexes, bits: captured.bits, colors: captured.colors };
+      if (idx >= 0) timeline[idx] = frameObj;
+      else timeline.push(frameObj);
+      nameInput.value = '';
+      hideAddFrame();
+      renderTimeline();
+      pushHistory('add/overwrite frame');
+    }
+
+    /* --- Compatibility small theme helpers (kept) --- */
+    function applyTheme(name) { if (name === 'dark') document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode'); document.documentElement.setAttribute('data-theme', name); }
+    function toggleThemeAndSave() { const isDark = document.body.classList.toggle('dark-mode'); try { localStorage.setItem('microkit_theme_v1', isDark ? 'dark' : 'light'); } catch (e) { } const themeToggle = document.getElementById('toggle'); if (themeToggle) themeToggle.checked = isDark; }
+
+    /* --- Jump/Loop offset calculator (fixed for long offsets) --- */
+    /*
+      Behavior:
+      - Parse current and target as hex (supports 0x prefix or plain hex).
+      - Compute relative offset = target - current - instruction_length.
+        (existing UI used -2; we preserve that for the same instruction length)
+      - If offset fits signed 8-bit (-128..127) show short offset (one byte).
+      - Otherwise compute signed 16-bit offset and show two-byte little-endian hex for longer relative jumps.
+      - Display signed decimal and hex bytes so you can plug into assembler/data as needed.
+    */
+    function calculateJump() {
+      const currentRaw = document.getElementById('current').value.trim();
+      const targetRaw = document.getElementById('target').value.trim();
+      // accept 0x... or plain hex
+      const parseHex = s => {
+        if (!s) return NaN;
+        const cleaned = ('' + s).trim().toUpperCase().replace(/^0X/, '');
+        if (!/^[0-9A-F]+$/.test(cleaned)) return NaN;
+        return parseInt(cleaned, 16);
+      };
+      const current = parseHex(currentRaw);
+      const target = parseHex(targetRaw);
+      const result = document.getElementById('result');
+      if (isNaN(current) || isNaN(target)) {
+        result.textContent = "Invalid hex input. Use values like 1000 or 100D or 0x1000.";
+        return;
+      }
+
+      // Instruction length assumed to be 2 bytes like original (preserve prior behavior)
+      const instrLen = 2;
+      const rel = target - current - instrLen;
+
+      // Helper to format signed numbers and bytes
+      const toSigned = (v, bits) => {
+        const max = 1 << bits;
+        const signed = (v & (max - 1)) < (1 << (bits - 1)) ? (v & (max - 1)) : (v & (max - 1)) - max;
+        return signed;
+      };
+      const toHexByte = (v) => (v & 0xFF).toString(16).padStart(2, '0').toUpperCase();
+      const toHexWordLE = (v) => {
+        const val = v & 0xFFFF;
+        const lo = val & 0xFF;
+        const hi = (val >> 8) & 0xFF;
+        return [toHexByte(lo), toHexByte(hi)];
+      };
+
+      // short (signed 8-bit) range
+      if (rel >= -128 && rel <= 127) {
+        const signed8 = toSigned(rel, 8);
+        const hexByte = toHexByte(signed8);
+        result.textContent = `Short jump: value = ${hexByte}`;
+        return;
+      }
+
+      // signed 16-bit
+      if (rel >= -32768 && rel <= 32767) {
+        const signed16 = toSigned(rel, 16);
+        const [lo, hi] = toHexWordLE(signed16);
+        result.textContent = `Long relative jump: value = ${lo} ${hi}`;
+        return;
+      }
+
+      // absolute difference too large for signed 16-bit relative
+      const dec = rel;
+      const absHex = (Math.abs(dec)).toString(16).toUpperCase();
+      result.textContent = `Offset ${dec} out of range for 16-bit relative. Consider using absolute jump or trampoline sequence. (${absHex})`;
+    }
+
+    /* --- Theme key used by helpers above --- */
+    const THEME_KEY = 'microkit_theme_v1';
+
+    /* --- Expose small helpers for debug --- */
+    window._timeline = timeline;
   </script>
+
+
 </body>
+
 </html>
